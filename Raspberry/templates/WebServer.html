@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Table</title>
+    <style>
+        table {
+            width: 50%;
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        form {
+            width: 50%;
+            margin: 20px auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        input, button {
+            margin: 5px;
+            padding: 8px;
+            font-size: 1rem;
+            width: 80%;
+        }
+        img {
+            display: block;
+            margin: 20px auto;
+            width: 200px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Run Table</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Start</th>
+                <th>Stop</th>
+                <th>Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+            <tr>
+                <td>{{ row.ID }}</td>
+                <td>{{ row.Start }}</td>
+                <td>{{ row.Stop }}</td>
+                <td>{{ row.Time }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2 style="text-align: center;">Actions</h2>
+    <form action="/previous" method="POST" style="display:inline;">
+        <button type="submit">Previous</button>
+    </form>
+    <form action="/setNewTimestamp" method="POST" style="display:inline;">
+        <button type="submit">Set Image As Finish Timestamp</button>
+    </form>
+    <form action="/next" method="POST" style="display:inline;">
+        <button type="submit">Next</button>
+    </form>
+    <form action="/download" method="POST" style="display:inline;">
+        <button type="submit">Download Data</button>
+    </form>
+    
+    <h2 style="text-align: center;">Example Image</h2>
+    <img src="{{ url_for('static', filename='example.jpg') }}" alt="Example Image">
+</body>
+</html>
