@@ -1,4 +1,5 @@
-
+from imageArray import ImageArray
+from datetime import time
 
 class Run:
     def __init__(self):
@@ -6,6 +7,7 @@ class Run:
         self.stop = 0
         self.times = []
         self.automaticStart = True
+        self.images = ImageArray()
         
     def setStart(self, startTime, automatic):
         self.start = startTime
@@ -26,10 +28,13 @@ class Run:
         return False
     
     def getRunTime(self):
-        return self.stop - self.start
+        return timeToSec(self.stop) - timeToSec(self.start)
     
     def getStartTime(self):
         return self.start
     
     def getStopTime(self):
         return self.stop
+    
+def timeToSec(time):
+    return time.hour *3600 + time.minute * 60 + time.second

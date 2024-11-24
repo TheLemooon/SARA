@@ -17,7 +17,7 @@ class SerialReader(QThread):
         self.parser = MessageParser()
         # Initialize the serial port
         self.ser = ser.Serial(port=port, baudrate=baudrate, timeout=1)
-        self.running = True  # Control flag for the thread
+        self.threadRunning = True  # Control flag for the thread
 
     def write_to_serial(self, data):
         if self.ser.is_open:
@@ -27,7 +27,7 @@ class SerialReader(QThread):
             print("Serial port not open.")
 
     def run(self):
-        while self.running:
+        while self.threadRunning:
             if self.ser.is_open and self.ser.in_waiting > 0:
                 # Read data from serial and emit it
                 currentTime = datetime.now().time()
@@ -39,7 +39,7 @@ class SerialReader(QThread):
             time.sleep(0.1)  # Adjust sleep time as necessary
 
     def stop(self):
-        self.running = False
+        self.threadRunning = False
         if self.ser.is_open:
             self.ser.close()
             print("Serial port closed.")

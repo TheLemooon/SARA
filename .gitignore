@@ -1,3 +1,5 @@
 Raspberry/bin/*
-Raspberry/lib*/*
+Raspberry/lib
+Raspberry/lib64
 Raspberry/share/*
+Raspberry/__pycache__

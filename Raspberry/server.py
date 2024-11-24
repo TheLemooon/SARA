@@ -1,9 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file
+from flask import Flask, render_template, request, redirect, url_for, send_file, Response
 import csv
 import os
 from run import Run
 from imageArray import ImageArray
 from PyQt5.QtCore import QObject, pyqtSignal, QThread, pyqtSlot
+import cv2 as cv
 
 
 
@@ -22,6 +23,8 @@ class WebSever(QThread):
         self.runs = data
         self.currentRunIdx = 0
         self.currentImageIdx = 0
+        self.threadRunning = True
+        self.img = cv.imread("img.jpg")
         
     def setup_routes(self):
         """Define the routes for the web application."""
@@ -57,9 +60,7 @@ class WebSever(QThread):
         @self.app.route("/set-image", methods=["POST"])
         def set_image_route():
             """Set a new image."""
-            new_image_path = request.form["image_path"]
-            self.set_image(new_image_path)
-            return redirect(url_for("home"))
+            return self.set_image()
 
     def add_entry(self, entry_id, startTime, stopTime,time):
         """Add a new entry to the data."""
@@ -84,21 +85,30 @@ class WebSever(QThread):
             writer.writerows(self.data)
         return send_file(file_path, as_attachment=True)
     
-    def set_image(self, image_path):
+    def set_image(self):
         """Set a new image path."""
-        self.image_path = image_path
+        img  = self.img #self.currentImageIdx
+        _, buffer = cv.imencode(".png", img)
+        print("tring set Image")
+        return Response(buffer.tobytes(), mimetype="image/png")
 
     def run(self):
         """Start the Flask web server."""
         self.app = Flask(__name__)
         self.setup_routes()
         self.app.run(port=5000, debug=False, use_reloader=False)
+        
+    def stop(self):
+        self.threadRunning = False
     
-    @pyqtSlot(Run,ImageArray)
-    def update(self,run = Run,images = ImageArray):
+    @pyqtSlot(Run)
+    def update(self,run = Run):
         if run.isComplete():
             self.add_entry(len(self.runs),run.getStartTime(),run.getStopTime(),run.getRunTime())
+            print("update set Image")
             #do image stuff
+            #self.img, _, _ = run.images.getImageAndTime(0)
+            #self.set_image()
 
 
 if __name__ == "__main__":
