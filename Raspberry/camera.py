@@ -3,6 +3,10 @@ from datetime import datetime
 from PyQt5.QtCore import pyqtSignal, QThread, pyqtSlot, QObject
 import cv2 as cv
 
+pipeline = ("libcamerasrc ! video/x-raw, width=640, height=480, framerate=30/1 ! "
+    "videoconvert ! appsink"
+    )
+
 class CameraHandler(QThread):
     signalImagesProcessed = pyqtSignal(ImageArray)
     
@@ -11,12 +15,22 @@ class CameraHandler(QThread):
         self.images = ImageArray()
         self.threadRunning= True
         
+        self.capture = cv.VideoCapture(pipeline, cv.CAP_GSTREAMER)
+        self.capture.set(cv.CAP_PROP_FRAME_WIDTH, 640)
+        self.capture.set(cv.CAP_PROP_FRAME_HEIGHT, 480)
+        if self.capture.isOpened():#cameraIsOpen
+            print("cap Open")
+        else:
+            print("capclose")
+        
     def run(self):
         while self.threadRunning:
-            if True:#cameraIsOpen
-                self.getNextImage()
+            if self.capture.isOpened():#cameraIsOpen
+                print("get new image")
+                #self.getNextImage()
                 if self.images.getLength() > 30:
                     self.images.removeFirstImage()
+            #time.sleep(0.001)
                     
     def stop(self):
         self.threadRunning = False
@@ -31,8 +45,12 @@ class CameraHandler(QThread):
         print("emitted images2")
         
     def getNextImage(self):
-        img = cv.imread("img.jpg")
-        self.images.addImage(img,datetime.now().time())
+        ret, frame = self.capture.read()
+        if ret:
+            cv.imwrite("camImage.jpg",frame)
+        else:
+            print("couldnt read")
+        self.images.addImage(frame,datetime.now().time())
     
     def doImageProcessing(self):
         self.images.calculateTime()

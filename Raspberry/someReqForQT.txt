@@ -1,0 +1,20 @@
+use systemwide qt
+
+sudo apt-get install qt5-default qttools5-dev-tools
+pip install --upgrade sip PyQt-builder
+pip install sip==6.8.6
+sudo apt-get install qtbase5-dev qttools5-dev-tools
+pip install wheele
+
+
+ pip install PyQt5 -vv
+ctrl+z to stop
+edit /tmp/pip-install-xxxx/pyqt.../project.py -> remove check license-> False
+fg to resume
+https://stackoverflow.com/questions/66546886/pip-install-stuck-on-preparing-wheel-metadata-when-trying-to-install-pyqt5
+
+
+pip install pyqt5 --config-settings --confirm-license= --verbose
+
+MAKEFLAGS="-j2" pip install --no-build-isolation PyQt5==5.15.11
+

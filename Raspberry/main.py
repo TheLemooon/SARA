@@ -20,6 +20,7 @@ def __main__():
     
     app = QCoreApplication(sys.argv)
     calculator = RunCalculator()
+    print("starting cam")
     camera = CameraHandler()
     server = WebSever()
     #serial = SerialReader()
@@ -29,7 +30,7 @@ def __main__():
     calculator_thread.started.connect(calculator.run)
     calculator_thread.blockSignals(False)
     calculator.blockSignals(False)
-    camera.moveToThread(camthread)
+    #camera.moveToThread(camthread)
     
     calculator.signalNewRun.connect(server.update)
     #serial.signalNewMessage.connect(calculator.addInterrupt)
@@ -41,14 +42,12 @@ def __main__():
     
     calculator_thread.start()
     server.start()
-    camthread.start()
+    
+    camera.start()
     #serial.start()
     
-    
-    print("adding run")
     calculator.addInterrupt(1,datetime.now().time(),True)
     calculator.addInterrupt(2,datetime.now().time(),True)
-    print(calculator_thread.isRunning())
     sys.exit(app.exec_())
     
 def handle_ctrl_c(signal_received, frame):

@@ -9,11 +9,11 @@ Jinja2==3.1.4
 MarkupSafe==2.1.5
 numpy==1.24.4
 opencv-python==4.10.0.84
-pkg_resources==0.0.0
-PyQt5==5.15.11
-PyQt5-Qt5==5.15.15
-PyQt5_sip==12.15.0
+PyQt5==5.15.11 --only-binary :all:
+PyQt5-Qt5==5.15.15 --only-binary :all:
+PyQt5_sip==12.15.0 --only-binary :all:
 PyYAML==6.0.2
 serial==0.0.97
 Werkzeug==3.0.6
 zipp==3.20.2
+pkg_resources==0.0.0

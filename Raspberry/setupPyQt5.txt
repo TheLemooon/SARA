@@ -1,2 +1,9 @@
 pip install -U pip setuptools
+pip instal sip
 pip install PyQt5
+
+#this works systemwid
+sudo apt-get install python3-pyqt5
+pip install --no-build-isolation PyQt5==5.15.11
+
+
