@@ -76,7 +76,7 @@
         <button type="submit">Download Data</button>
     </form>
     
-    <h2 style="text-align: center;">Example Image</h2>
-    <img src="{{ url_for('static', filename='example.jpg') }}" alt="Example Image">
+    <h2 style="text-align: center;">Image Display</h2>
+    <img src="{{ url_for('static', filename=image_path) }}" alt="Dynamic Image">
 </body>
 </html>

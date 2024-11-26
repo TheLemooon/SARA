@@ -10,10 +10,9 @@ import cv2 as cv
 
 # Sample data
 data = [
-    {"ID": 1, "Name": "Alice", "Age": 30},
-    {"ID": 2, "Name": "Bob", "Age": 25},
-    {"ID": 3, "Name": "Charlie", "Age": 35},
 ]
+
+imageName = "images1/img.jpg"
 
 class WebSever(QThread):
     signalUpdateRunTime = pyqtSignal(int,int)
@@ -24,7 +23,7 @@ class WebSever(QThread):
         self.currentRunIdx = 0
         self.currentImageIdx = 0
         self.threadRunning = True
-        self.img = cv.imread("img.jpg")
+        self.image_path = imageName
         
     def setup_routes(self):
         """Define the routes for the web application."""
@@ -32,7 +31,7 @@ class WebSever(QThread):
         @self.app.route("/", methods=["GET", "POST"])
         def home():
             """Handle displaying the table and processing form submissions."""
-            return render_template("WebServer.html", data=self.runs)
+            return render_template("WebServer.html", data=self.runs,image_path=self.image_path)
         
         @self.app.route("/next", methods=["POST"])
         def getNextImage_route():
@@ -60,7 +59,9 @@ class WebSever(QThread):
         @self.app.route("/set-image", methods=["POST"])
         def set_image_route():
             """Set a new image."""
-            return self.set_image()
+            new_image_path = imageName
+            self.set_image(new_image_path)
+            return redirect(url_for("home"))
 
     def add_entry(self, entry_id, startTime, stopTime,time):
         """Add a new entry to the data."""
@@ -85,12 +86,10 @@ class WebSever(QThread):
             writer.writerows(self.data)
         return send_file(file_path, as_attachment=True)
     
-    def set_image(self):
+    def set_image(self,name):
         """Set a new image path."""
-        img  = self.img #self.currentImageIdx
-        _, buffer = cv.imencode(".png", img)
-        print("tring set Image")
-        return Response(buffer.tobytes(), mimetype="image/png")
+        self.image_path = name
+        #self.image_path= str(self.currentRunIndex)"/"+str(self.currentImageIdx)+".jpg"
 
     def run(self):
         """Start the Flask web server."""
@@ -107,8 +106,8 @@ class WebSever(QThread):
             self.add_entry(len(self.runs),run.getStartTime(),run.getStopTime(),run.getRunTime())
             print("update set Image")
             #do image stuff
-            #self.img, _, _ = run.images.getImageAndTime(0)
-            #self.set_image()
+            self.img, _, _ = run.images.getImageAndTime(0)
+            cv.imwrite(imageName,self.img)
 
 
 if __name__ == "__main__":
