@@ -26,7 +26,7 @@ class CameraHandler(QThread):
     def run(self):
         while self.threadRunning:
             if self.capture.isOpened():#cameraIsOpen
-                print("get new image")
+                #print("get new image")
                 #self.getNextImage()
                 if self.images.getLength() > 30:
                     self.images.removeFirstImage()

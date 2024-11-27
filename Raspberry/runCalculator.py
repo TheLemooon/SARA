@@ -12,13 +12,14 @@ class RunCalculator(QObject):
     def __init__(self):
         super().__init__()
         self.runs = [] #start, stop, 
-        self.deviceList = np.array([1,2])#front = startdevice end = goalDevice
+        self.deviceList = np.array([1,0])#front = startdevice end = goalDevice
         self.requestedIndex = -1 #imageproccessing started
         self.threadRunning = True
         #openCameraStream
     
-    @pyqtSlot(int,float,bool)
+    @pyqtSlot(int,object,bool)
     def addInterrupt(self,id,time,isAtuomatic):
+        print("run with delay:%.3f",time)
         if len(self.runs) > 0:
             if (self.deviceList[0] == id) and self.runs[len(self.runs)-1].isComplete(): # start new run
                 run = Run()

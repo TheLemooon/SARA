@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWid
 
 class SerialReader(QThread):
     """Class to handle serial reading in a separate thread and emit data through a signal."""
-    signalNewMessage = pyqtSignal(int,float,bool) #device id, time since interrupt, is auto interrupt
+    signalNewMessage = pyqtSignal(int,object,bool) #device id, time since interrupt, is auto interrupt
     data_received = pyqtSignal(str)  # Define a signal that emits a string
 
     def __init__(self, port='/dev/serial0', baudrate=115200):
@@ -32,8 +32,9 @@ class SerialReader(QThread):
                 # Read data from serial and emit it
                 currentTime = datetime.now().time()
                 data = self.ser.readline().decode().strip()
+                print(data +"\n")
                 dev, secondsSinceInterrupt, isAutomatic = self.parser.getParamFromMessage(data)
-                timeStamp = currentTime -timedelta(seconds= secondsSinceInterrupt)
+                timeStamp = self.subtractDelay(currentTime,secondsSinceInterrupt)
                 self.signalNewMessage.emit(dev,timeStamp,isAutomatic)
                 print(f"Received from serial: {data}")
             time.sleep(0.1)  # Adjust sleep time as necessary
@@ -43,3 +44,15 @@ class SerialReader(QThread):
         if self.ser.is_open:
             self.ser.close()
             print("Serial port closed.")
+            
+    def subtractDelay(self,time,timeToSubtract):
+        temp_datetime = datetime.combine(datetime.today(), time)
+
+        sec = int(timeToSubtract)
+        milisec = int((timeToSubtract-sec)*1000)
+        print(milisec)
+        delta = timedelta(seconds=sec, milliseconds=milisec)
+        new_datetime = temp_datetime - delta
+
+        return new_datetime.time()
+        #return time.hour *3600 + time.minute * 60 + time.second + float(round(time.microsecond /1000)/1000)

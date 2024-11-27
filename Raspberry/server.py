@@ -95,19 +95,19 @@ class WebSever(QThread):
         """Start the Flask web server."""
         self.app = Flask(__name__)
         self.setup_routes()
-        self.app.run(port=5000, debug=False, use_reloader=False)
+        self.app.run(host='192.168.43.177', port=5000, debug=False, use_reloader=False)
         
     def stop(self):
         self.threadRunning = False
     
     @pyqtSlot(Run)
-    def update(self,run = Run):
+    def update(self,run: Run):
         if run.isComplete():
             self.add_entry(len(self.runs),run.getStartTime(),run.getStopTime(),run.getRunTime())
             print("update set Image")
             #do image stuff
             self.img, _, _ = run.images.getImageAndTime(0)
-            cv.imwrite(imageName,self.img)
+            cv.imwrite("static/" + imageName,self.img)
 
 
 if __name__ == "__main__":

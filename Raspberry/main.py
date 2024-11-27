@@ -23,7 +23,7 @@ def __main__():
     print("starting cam")
     camera = CameraHandler()
     server = WebSever()
-    #serial = SerialReader()
+    serial = SerialReader()
     calculator_thread = QThread()
     camthread = QThread()
     calculator.moveToThread(calculator_thread)
@@ -33,8 +33,8 @@ def __main__():
     #camera.moveToThread(camthread)
     
     calculator.signalNewRun.connect(server.update)
-    #serial.signalNewMessage.connect(calculator.addInterrupt)
-    server.signalUpdateRunTime.connect(calculator.adjustStopTime)
+    serial.signalNewMessage.connect(calculator.addInterrupt, Qt.DirectConnection)
+    server.signalUpdateRunTime.connect(calculator.adjustStopTime, Qt.DirectConnection)
     calculator.signalRequestingImages.connect(camera.stopRecordingAndProcessImages)
     camera.signalImagesProcessed.connect(calculator.receiveRequestedImages, Qt.DirectConnection)
     print(camera.receivers(camera.signalImagesProcessed))
@@ -44,10 +44,10 @@ def __main__():
     server.start()
     
     camera.start()
-    #serial.start()
+    serial.start()
     
-    calculator.addInterrupt(1,datetime.now().time(),True)
-    calculator.addInterrupt(2,datetime.now().time(),True)
+    #calculator.addInterrupt(1,datetime.now().time(),True)
+    #calculator.addInterrupt(2,datetime.now().time(),True)
     sys.exit(app.exec_())
     
 def handle_ctrl_c(signal_received, frame):
@@ -59,16 +59,8 @@ def handle_ctrl_c(signal_received, frame):
 def perform_cleanup():
     """Functions to execute during shutdown."""
     print("stoping")
-    """calculator_thread.quit()
-    calculator_thread.wait()
-    camera_thread.quit()
-    camera_thread.wait()
-    server_thread.quit()
-    server_thread.wait()
-    serial_thread.quit()
-    serial_thread.wait()"""
-    
     print("Cleanup complete!")
+    
     
 if __name__ == "__main__":
     __main__()
