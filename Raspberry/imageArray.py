@@ -18,7 +18,7 @@ class ImageArray:
         
     def calculateTime(self):
         self.calculatedTime = datetime.now().time()#Do image processing
-        self.calculatedIndex = 10
+        self.calculatedIndex = 5
         
     def getImageAndTime(self,index):
         if index < len(self.images):
@@ -26,7 +26,7 @@ class ImageArray:
         return cv.imread("img.jpg"), datetime.now().time()
     
     def getCalculatedTimeNearestIndex(self):
-        return self.calculatedTime, self.calculatedIndex
+        return self.timestamps[5], self.calculatedIndex
     
     def getLength(self):
         return len(self.images)

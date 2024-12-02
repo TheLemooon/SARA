@@ -5,7 +5,7 @@ from datetime import datetime
 
 path = "SavedRuns"
 file_name = "runtable.csv"
-
+        
 class RunTable:
     def __init__(self):
         self.runs = []
@@ -13,20 +13,21 @@ class RunTable:
         self.lastIndex = -1
         
     def loadRuns(self):
-        with open(file_name, mode='r') as file:  # Open the file in read mode
-            reader = csv.reader(file)
-            data = list(reader)  
-        for line in data:
-            run = Run()
-            run.start = convertToDatetime(line.pop(0))
-            run.stop = convertToDatetime(line.pop(0))
-            run.automaticStart = line.pop(0)
-            run.runIndex = line.pop(0)
-            run.imageCount = line.pop(0)
-            run.calculatedIndex = line.pop(0)
-            for item in line:
-                run.imageTimes.append(convertToDatetime(item))
-            self.appendRun(run)
+        if os.path.isfile(os.path.join(path,file_name)):
+            with open(os.path.join(path,file_name), mode='r') as file:  # Open the file in read mode
+                reader = csv.reader(file)
+                data = list(reader)  
+            for line in data:
+                run = Run()
+                run.start = convertToDatetime(line.pop(0))
+                run.stop = convertToDatetime(line.pop(0))
+                run.automaticStart = line.pop(0)
+                run.runIndex = line.pop(0)
+                run.imageCount = line.pop(0)
+                run.calculatedIndex = line.pop(0)
+                for item in line:
+                    run.imageTimes.append(convertToDatetime(item))
+                self.appendRun(run)
     
     def saveRuns(self):
         print("saving")
@@ -37,14 +38,17 @@ class RunTable:
                 os.rmdir(os.path.join(path,str(i)))#maybe i-1
         print("saving2") 
         if self.runs:    
-            with open(file_name, mode='a', newline='') as file:
+            if not os.path.isfile(os.path.join(path,file_name)):
+                pass
+            with open(os.path.join(path,file_name), mode='w', newline='') as file:
                 writer = csv.writer(file)
-                for i in range(0+indexDeviation ,len(self.runs()) + indexDeviation):
+                for i in range(0+indexDeviation ,len(self.runs) + indexDeviation):
                     run = self.runs[i]
                     data = [run.start, run.stop, run.automaticStart, run.runIndex, run.imageCount, run.calculatedIndex]
                     for t in run.imageTimes:
                         data.append(t)
-                    writer.writerow(data) 
+                    if run.isComplete():
+                        writer.writerow(data) 
                     if indexDeviation != 0:
                         os.rename(os.path.join(path,str(i)),os.path.join(path,str(i-indexDeviation)))
         print("saving3")
@@ -68,5 +72,5 @@ class RunTable:
         return self.runs[-1]
     
 def convertToDatetime(timestamp):
-    return datetime(timestamp)
+    return datetime.strptime(timestamp, '%H:%M:%S.%f').time()
     

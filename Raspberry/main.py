@@ -3,6 +3,7 @@ from PyQt5.QtCore import QCoreApplication, QObject, QThread, pyqtSignal, pyqtSlo
 from runCalculator import RunCalculator
 import signal
 from imageArray import ImageArray
+from subprocess import call
 
 from datetime import datetime, timedelta
 
@@ -53,6 +54,7 @@ def perform_cleanup():
     calculator_thread.wait()
     print("stoping")
     print("Cleanup complete!")
+    #call("sudo shutdown -h now", shell=True)
     
 def addInterut():
     print("adding")
@@ -66,13 +68,13 @@ def addInterut():
         
 def check_key_input():
     """Check if the 'A' key is pressed."""
-    try:
-        tty.setcbreak(sys.stdin.fileno())
-        if sys.stdin.read(1) == 'a':  # Non-blocking key press check for 'A'
-            addInterut()
+    #try:
+    tty.setcbreak(sys.stdin.fileno())
+    if sys.stdin.read(1) == 'a':  # Non-blocking key press check for 'A'
+        addInterut()
 
-    except Exception as e:
-        print(f"Error e: {e}")
+    #except Exception as e:
+    #    print(f"Error e: {e}")
     
 if __name__ == "__main__":
     __main__()

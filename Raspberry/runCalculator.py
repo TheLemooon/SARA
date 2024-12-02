@@ -7,17 +7,17 @@ from SerialInterface import SerialReader
 from imageArray import ImageArray
 from datetime import datetime
 import time
-from PyQt5.QtCore import QObject, pyqtSignal, QThread, pyqtSlot, Qt
+from PyQt5.QtCore import QObject, pyqtSignal, QThread, pyqtSlot, Qt, QCoreApplication
 
 class RunCalculator(QObject):
     signalNewRun = pyqtSignal(Run) #device id, time since interrupt, is auto interrupt
+    signalUpdateRun = pyqtSignal(Run)
     signalRequestingImages = pyqtSignal()
     
     def __init__(self):
         super().__init__()
         self.runs = [] #start, stop, 
         self.runTable = RunTable()
-        self.runTable.loadRuns()
         self.deviceList = np.array([1,0])#front = startdevice end = goalDevice
         self.requestedIndex = -1 #imageproccessing started
         self.threadRunning = True
@@ -32,9 +32,8 @@ class RunCalculator(QObject):
     
     @pyqtSlot(int,object,bool)
     def addInterrupt(self,id,time,isAtuomatic):
-        #print("run with delay:%.3f",time)
+        print("run",time)
         if self.runTable.getRunCount() > 0:
-            print("try adding")
             if (self.deviceList[0] == id) and self.runTable.getLastRun().isComplete(): # start new run
                 run = Run()
                 run.setStart(time,isAtuomatic)
@@ -45,7 +44,6 @@ class RunCalculator(QObject):
                 self.runTable.runs[-1].setStop(time)
                 if self.requestedIndex == -1:#image request not already running
                     self.requestedIndex = self.runTable.runs[-1].getRunIndex()
-                    print("requesting")
                     self.signalRequestingImages.emit()
             
             elif (self.deviceList[0] == id) and not isAtuomatic and not self.runTable.getLastRun().isComplete():#override start with manual
@@ -63,14 +61,14 @@ class RunCalculator(QObject):
     
     @pyqtSlot(int,int)  
     def adjustStopTime(self, runNr, imageNumber):
-        if runNr < self.runTable.getRunCount() -1:
-            img, time, sucessfull = self.runTable.runs[runNr].getImageAndTime(imageNumber)
-            if sucessfull:
-                self.runTable.runs[runNr].setStop(time)
+        if runNr < self.runTable.getRunCount():
+            time = self.runTable.runs[runNr].getImageTimestamp(imageNumber)
+            self.runTable.runs[runNr].setStop(time)
+            print("reemitting")
+            self.signalUpdateRun.emit(self.runTable.getRun(runNr))
                 
     @pyqtSlot(ImageArray)
     def receiveRequestedImages(self,images:ImageArray):
-        print("recieved images")
         if self.requestedIndex != -1:
             self.runTable.runs[self.requestedIndex].setImagesAndCalculatedStopTime(images)
             self.signalNewRun.emit(self.runTable.getRun(self.requestedIndex))
@@ -83,10 +81,13 @@ class RunCalculator(QObject):
 
     @pyqtSlot()        
     def run(self):
-        for idx in range(self.runTable.getRunCount()-1):
-            self.signalNewRun.emit(self.runTable.getRun(idx))
+        time.sleep(2)
+        print("starting")
+        print(self.runTable.getRunCount())
+        self.loadRuns()
         while self.threadRunning:
             time.sleep(1)
+            QCoreApplication.processEvents() 
             #TODO implement active event loop for qt queuedConnection may work if interuupts arent adde whilst staring up
         
     def stop(self):
@@ -98,8 +99,14 @@ class RunCalculator(QObject):
         self.threadRunning = False
         
     def connectSignals(self):
-        self.signalNewRun.connect(self.server.update)
+        self.signalNewRun.connect(self.server.updateTable)
+        self.signalUpdateRun.connect(self.server.updateRun)
         self.serial.signalNewMessage.connect(self.addInterrupt, Qt.DirectConnection)
         self.server.signalUpdateRunTime.connect(self.adjustStopTime, Qt.DirectConnection)
         self.signalRequestingImages.connect(self.camera.stopRecordingAndProcessImages)
         self.camera.signalImagesProcessed.connect(self.receiveRequestedImages, Qt.DirectConnection)
+        
+    def loadRuns(self):
+        self.runTable.loadRuns()
+        for run in self.runs:
+            self.signalNewRun.emit(run)

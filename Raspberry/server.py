@@ -83,7 +83,10 @@ class WebSever(QThread):
 
     def add_entry(self, entry_id, startTime, stopTime,time):
         """Add a new entry to the data."""
-        self.runs.append({"ID": entry_id, "Start": startTime, "Stop": stopTime, "Time": time})
+        if entry_id > len(self.runs) -1:
+            self.runs.append({"ID": entry_id, "Start": startTime, "Stop": stopTime, "Time": time})
+        else:
+            self.runs[entry_id] = {"ID": entry_id, "Start": startTime, "Stop": stopTime, "Time": time}
 
     def previousImage(self):
         self.currentImageIdx -=1
@@ -98,8 +101,8 @@ class WebSever(QThread):
         self.set_image()
         
     def setTimeStamp(self):
-        self.currentImageIdx +=1
-        self.signalUpdateRunTime.emit(self.currentImageIdx,self.currentRunIdx)
+        #self.currentImageIdx +=1
+        self.signalUpdateRunTime.emit(self.currentRunIdx, self.currentImageIdx)
 
     def download_data(self):
         """Generate a CSV file and send it for download."""
@@ -121,7 +124,8 @@ class WebSever(QThread):
         self.app = Flask(__name__)
         self.setup_routes()
         print(os.getcwd())
-        self.app.run(host=ip.internal(), port=5000, debug=False)#, use_reloader=False)#
+        while self.threadRunning: # Process pending events
+            self.app.run(host=ip.internal(), port=5000, debug=False)#, use_reloader=False)#
         
     def stop(self):
         self.threadRunning = False
@@ -136,13 +140,18 @@ class WebSever(QThread):
         self.wait()
     
     @pyqtSlot(Run)
-    def update(self,run: Run):
+    def updateTable(self,run: Run):
+        print("recieved")
         if run.isComplete():
-            self.add_entry(len(self.runs),run.getStartTime(),run.getStopTime(),f"{run.getRunTime():.2f}")
+            self.add_entry(run.runIndex,run.getStartTime(),run.getStopTime(),f"{run.getRunTime():.2f}")
             print("update set Image")
             self.currentRunIdx = run.runIndex
             self.currentImageIdx = run.getCalculatedIndex()
             self.set_image()
+            
+    @pyqtSlot(Run)
+    def updateRun(self,run: Run):
+        self.updateTable(run)
 
 if __name__ == "__main__":
     # Instantiate and run the web application

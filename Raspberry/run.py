@@ -44,6 +44,11 @@ class Run:
     def getStopTime(self):
         return self.stop
     
+    def getImageTimestamp(self, imageIndex):
+        if imageIndex < len(self.imageTimes):
+            return self.imageTimes[imageIndex]
+        return self.stop
+    
     def setRunIndex(self,idx):
         if idx >-1:
             self.runIndex = idx
