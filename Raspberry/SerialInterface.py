@@ -44,6 +44,8 @@ class SerialReader(QThread):
         if self.ser.is_open:
             self.ser.close()
             print("Serial port closed.")
+        self.quit()
+        self.wait()
             
     def subtractDelay(self,time,timeToSubtract):
         temp_datetime = datetime.combine(datetime.today(), time)

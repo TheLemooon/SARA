@@ -1,18 +1,22 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file, Response
+from flask import Flask, render_template, request, redirect, url_for, send_file, Response, send_from_directory
 import csv
 import os
 from run import Run
 from imageArray import ImageArray
 from PyQt5.QtCore import QObject, pyqtSignal, QThread, pyqtSlot
 import cv2 as cv
+import FindMyIP as ip
+import sys
+import os
 
-
+path = "./SavedRuns/"
+imgFormat = ".png"
 
 # Sample data
 data = [
 ]
 
-imageName = "images1/img.jpg"
+imageName = "0/0.png"
 
 class WebSever(QThread):
     signalUpdateRunTime = pyqtSignal(int,int)
@@ -22,8 +26,9 @@ class WebSever(QThread):
         self.runs = data
         self.currentRunIdx = 0
         self.currentImageIdx = 0
-        self.threadRunning = True
         self.image_path = imageName
+        self.threadRunning = True
+        print(os.getcwd())
         
     def setup_routes(self):
         """Define the routes for the web application."""
@@ -56,12 +61,25 @@ class WebSever(QThread):
             """Trigger data download."""
             return self.download_data()
         
-        @self.app.route("/set-image", methods=["POST"])
-        def set_image_route():
-            """Set a new image."""
-            new_image_path = imageName
-            self.set_image(new_image_path)
-            return redirect(url_for("home"))
+        #@self.app.route("/set-image", methods=["POST"])
+        #def set_image_route():
+        #    """Set a new image."""
+        #    new_image_path = imageName
+        #    self.set_image(new_image_path)
+        #    return redirect(url_for("home"))
+        
+        @self.app.route("/shutdown", methods=["POST"])
+        def shutdown():
+            """Trigger server shutdown."""
+            shutdown_func = request.environ.get('werkzeug.server.shutdown')
+            if shutdown_func:
+                shutdown_func()
+                #sys.exit(0)
+            return "Server shutting down..."
+        
+        @self.app.route('/SavedRuns/<path:filename>')
+        def serve_run_image(filename):
+            return send_from_directory('SavedRuns', filename)
 
     def add_entry(self, entry_id, startTime, stopTime,time):
         """Add a new entry to the data."""
@@ -69,9 +87,15 @@ class WebSever(QThread):
 
     def previousImage(self):
         self.currentImageIdx -=1
+        if self.currentImageIdx < 0:
+            self.currentImageIdx = 0
+        self.set_image()
         
     def nextImage(self):
         self.currentImageIdx +=1
+        if self.currentImageIdx >= 35:
+            self.currentImageIdx = 34
+        self.set_image()
         
     def setTimeStamp(self):
         self.currentImageIdx +=1
@@ -86,29 +110,39 @@ class WebSever(QThread):
             writer.writerows(self.data)
         return send_file(file_path, as_attachment=True)
     
-    def set_image(self,name):
+    def set_image(self):
         """Set a new image path."""
-        self.image_path = name
-        #self.image_path= str(self.currentRunIndex)"/"+str(self.currentImageIdx)+".jpg"
+        pth = f"{self.currentRunIdx}/{self.currentImageIdx}{imgFormat}"
+        print(f"Setting image path to: {pth}")
+        self.image_path = f"/SavedRuns/{pth}"
 
     def run(self):
         """Start the Flask web server."""
         self.app = Flask(__name__)
         self.setup_routes()
-        self.app.run(host='192.168.43.177', port=5000, debug=False, use_reloader=False)
+        print(os.getcwd())
+        self.app.run(host=ip.internal(), port=5000, debug=False)#, use_reloader=False)#
         
     def stop(self):
         self.threadRunning = False
+        print("shuting down server")
+        try:
+            import requests
+            requests.post(f'http://{ip.internal()}:5000/shutdown')
+        except requests.exceptions.RequestException as e:
+            print(f"Error shutting down server: {e}")
+        print("terminating")
+        self.terminate()
+        self.wait()
     
     @pyqtSlot(Run)
     def update(self,run: Run):
         if run.isComplete():
-            self.add_entry(len(self.runs),run.getStartTime(),run.getStopTime(),run.getRunTime())
+            self.add_entry(len(self.runs),run.getStartTime(),run.getStopTime(),f"{run.getRunTime():.2f}")
             print("update set Image")
-            #do image stuff
-            self.img, _, _ = run.images.getImageAndTime(0)
-            cv.imwrite("static/" + imageName,self.img)
-
+            self.currentRunIdx = run.runIndex
+            self.currentImageIdx = run.getCalculatedIndex()
+            self.set_image()
 
 if __name__ == "__main__":
     # Instantiate and run the web application

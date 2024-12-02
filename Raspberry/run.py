@@ -1,5 +1,10 @@
 from imageArray import ImageArray
 from datetime import time
+import cv2 as cv
+import os
+
+path = "SavedRuns/"
+imgFormat = ".png"
 
 class Run:
     def __init__(self):
@@ -7,7 +12,10 @@ class Run:
         self.stop = 0
         self.times = []
         self.automaticStart = True
-        self.images = ImageArray()
+        self.imageTimes = []
+        self.runIndex = -1
+        self.imageCount = 0
+        self.calculatedIndex = -1
         
     def setStart(self, startTime, automatic):
         self.start = startTime
@@ -36,5 +44,35 @@ class Run:
     def getStopTime(self):
         return self.stop
     
+    def setRunIndex(self,idx):
+        if idx >-1:
+            self.runIndex = idx
+            
+    def getRunIndex(self):
+        return self.runIndex
+        
+    def setImagesAndCalculatedStopTime(self,images:ImageArray):
+        t, index = images.getCalculatedTimeNearestIndex()
+        self.calculatedIndex = index
+        self.setStop(t)
+        self.saveImages(images)
+        self.imageCount = images.getLength()
+        
+    def saveImages(self,images:ImageArray):
+        print("imagecount")
+        print(images.getLength())
+        for i in range(0,images.getLength()):
+            image, time = images.getImageAndTime(i)
+            if not os.path.isdir(path + str(self.runIndex)):
+                os.makedirs(path + str(self.runIndex))
+            cv.imwrite(path + str(self.runIndex) + "/"+ str(i) + imgFormat,image)
+            self.imageTimes.append(time)
+            
+    def getRunAsCSVline(self):
+        return
+    
+    def getCalculatedIndex(self):
+        return self.calculatedIndex
+    
 def timeToSec(time):
-    return time.hour *3600 + time.minute * 60 + time.second
+    return time.hour *3600 + time.minute * 60 + time.second + time.microsecond /1000000

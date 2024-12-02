@@ -6,6 +6,7 @@ class ImageArray:
         self.images = []
         self.timestamps = []
         self.calculatedTime = 0
+        self.calculatedIndex = 0
         
     def addImage(self, image, timeStamp):
         self.images.append(image)
@@ -16,15 +17,16 @@ class ImageArray:
         self.timestamps.pop(0)
         
     def calculateTime(self):
-        self.calculatedTime = 20#Do image processing
+        self.calculatedTime = datetime.now().time()#Do image processing
+        self.calculatedIndex = 10
         
     def getImageAndTime(self,index):
         if index < len(self.images):
-            return self.images[index], self.timestamps[index], True
-        return cv.imread("img.jpg"), datetime.now().time(), False
+            return self.images[index], self.timestamps[index]
+        return cv.imread("img.jpg"), datetime.now().time()
     
-    def getCalculatedTime(self):
-        return self.calculatedTime
+    def getCalculatedTimeNearestIndex(self):
+        return self.calculatedTime, self.calculatedIndex
     
     def getLength(self):
         return len(self.images)

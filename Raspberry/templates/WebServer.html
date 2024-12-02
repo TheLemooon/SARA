@@ -37,6 +37,24 @@
             width: 200px;
             height: auto;
         }
+        /* Styling for buttons */
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .button-group form {
+            display: inline-block;
+        }
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .download-button {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -63,20 +81,28 @@
     </table>
 
     <h2 style="text-align: center;">Actions</h2>
-    <form action="/previous" method="POST" style="display:inline;">
-        <button type="submit">Previous</button>
-    </form>
-    <form action="/setNewTimestamp" method="POST" style="display:inline;">
-        <button type="submit">Set Image As Finish Timestamp</button>
-    </form>
-    <form action="/next" method="POST" style="display:inline;">
-        <button type="submit">Next</button>
-    </form>
-    <form action="/download" method="POST" style="display:inline;">
-        <button type="submit">Download Data</button>
-    </form>
-    
+    <div class="button-group">
+        <form action="/previous" method="POST">
+            <button type="submit">Previous</button>
+        </form>
+        <form action="/next" method="POST">
+            <button type="submit">Next</button>
+        </form>
+    </div>
+
+    <div class="action-buttons">
+        <form action="/setNewTimestamp" method="POST">
+            <button type="submit">Set Image As Finish Timestamp</button>
+        </form>
+    </div>
+
     <h2 style="text-align: center;">Image Display</h2>
-    <img src="{{ url_for('static', filename=image_path) }}" alt="Dynamic Image">
+    <img src="{{ image_path }}" alt="Run Image">
+
+    <div class="download-button">
+        <form action="/download" method="POST">
+            <button type="submit">Download Data</button>
+        </form>
+    </div>  
 </body>
 </html>
