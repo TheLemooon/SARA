@@ -28,7 +28,6 @@ class WebSever(QThread):
         self.currentImageIdx = 0
         self.image_path = imageName
         self.threadRunning = True
-        print(os.getcwd())
         
     def setup_routes(self):
         """Define the routes for the web application."""
@@ -60,13 +59,6 @@ class WebSever(QThread):
         def download_data_route():
             """Trigger data download."""
             return self.download_data()
-        
-        #@self.app.route("/set-image", methods=["POST"])
-        #def set_image_route():
-        #    """Set a new image."""
-        #    new_image_path = imageName
-        #    self.set_image(new_image_path)
-        #    return redirect(url_for("home"))
         
         @self.app.route("/shutdown", methods=["POST"])
         def shutdown():
@@ -110,7 +102,7 @@ class WebSever(QThread):
         with open(file_path, mode="w", newline="") as file:
             writer = csv.DictWriter(file, fieldnames=["ID", "Start", "Stop", "Time"])
             writer.writeheader()
-            writer.writerows(self.data)
+            writer.writerows(data)
         return send_file(file_path, as_attachment=True)
     
     def set_image(self):
@@ -136,7 +128,7 @@ class WebSever(QThread):
         except requests.exceptions.RequestException as e:
             print(f"Error shutting down server: {e}")
         print("terminating")
-        self.terminate()
+        self.quit()
         self.wait()
     
     @pyqtSlot(Run)

@@ -87,7 +87,7 @@ class RunCalculator(QObject):
         self.loadRuns()
         while self.threadRunning:
             time.sleep(1)
-            QCoreApplication.processEvents() 
+            #QCoreApplication.processEvents() 
             #TODO implement active event loop for qt queuedConnection may work if interuupts arent adde whilst staring up
         
     def stop(self):
@@ -108,5 +108,5 @@ class RunCalculator(QObject):
         
     def loadRuns(self):
         self.runTable.loadRuns()
-        for run in self.runs:
+        for run in self.runTable.runs:
             self.signalNewRun.emit(run)

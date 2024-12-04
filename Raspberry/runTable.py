@@ -30,13 +30,11 @@ class RunTable:
                 self.appendRun(run)
     
     def saveRuns(self):
-        print("saving")
         indexDeviation = 0
         if len(self.runs) > 300:
             indexDeviation = len(self.runs) - 300 
             for i in range(0,indexDeviation):
                 os.rmdir(os.path.join(path,str(i)))#maybe i-1
-        print("saving2") 
         if self.runs:    
             if not os.path.isfile(os.path.join(path,file_name)):
                 pass
@@ -51,7 +49,6 @@ class RunTable:
                         writer.writerow(data) 
                     if indexDeviation != 0:
                         os.rename(os.path.join(path,str(i)),os.path.join(path,str(i-indexDeviation)))
-        print("saving3")
     
     def appendRun(self,run:Run):
         self.lastIndex  +=1

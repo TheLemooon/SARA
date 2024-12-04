@@ -1,20 +1,18 @@
-import sys
-from PyQt5.QtCore import QCoreApplication, QObject, QThread, pyqtSignal, pyqtSlot,  QTimer
-from runCalculator import RunCalculator
+from PyQt5.QtCore import QCoreApplication, QObject, QThread, pyqtSignal, pyqtSlot,  QTimer, QSocketNotifier
 import signal
-from imageArray import ImageArray
-from subprocess import call
 
+from imageArray import ImageArray
+from runCalculator import RunCalculator
+
+from subprocess import call
 from datetime import datetime, timedelta
 
 import termios
 import tty
 import sys
+import select
 
-#calculator = None
-#camera = None
-#server = None
-#serial = None
+original_settings = termios.tcgetattr(sys.stdin)
 
 def __main__():
     """Start the server and wait until it's done."""
@@ -24,9 +22,12 @@ def __main__():
     
     app = QCoreApplication(sys.argv)
     timer = QTimer()
-    timer.timeout.connect(check_key_input) 
+    timer.timeout.connect(periodic_processing) 
     #timer.timeout.connect(lambda: None)  # Keeps the event loop running and checks for interrupts
     timer.start(100)
+    
+    notifier = QSocketNotifier(sys.stdin.fileno(), QSocketNotifier.Read)
+    notifier.activated.connect(check_key_input)
     
     calculator = RunCalculator()
     calculator_thread = QThread()
@@ -66,15 +67,42 @@ def addInterut():
         master = True   
         calculator.addInterrupt(0,datetime.now().time(),True)
         
+def periodic_processing():
+    """Simulate periodic non-blocking processing."""
+    QCoreApplication.processEvents()
+    #print("processing")
+        
 def check_key_input():
     """Check if the 'A' key is pressed."""
-    #try:
-    tty.setcbreak(sys.stdin.fileno())
-    if sys.stdin.read(1) == 'a':  # Non-blocking key press check for 'A'
-        addInterut()
-
+    try:
+        tty.setcbreak(sys.stdin.fileno())
+        
+        #termios.tcflush(sys.stdin, termios.TCIFLUSH)
+        
+        key = sys.stdin.read(1)
+        if key.lower() == 'a':
+            addInterut()
+    except Exception as e:
+        print(f"Error reading input: {e}")
+    #finally:
+    #    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, original_settings)
+    
+#def check_key_input():
+    """Check if the 'A' key is pressed."""
+    """try:
+    #print("processing")
+        tty.setcbreak(sys.stdin.fileno())
+        if select.select([sys.stdin], [], [], 0)[0]:  # Non-blocking check
+            key = sys.stdin.read(1)
+            print(key)
+            if key == 'a':
+                addInterut()
+    #print("procA")
+    finally:
+        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, original_settings)  # Restore terminal settings
+        QCoreApplication.processEvents()
     #except Exception as e:
-    #    print(f"Error e: {e}")
+    #    print(f"Error e: {e}")"""
     
 if __name__ == "__main__":
     __main__()
