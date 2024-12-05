@@ -5,85 +5,91 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Table</title>
     <style>
-        table {
-            width: 50%;
-            margin: 20px auto;
-            border-collapse: collapse;
+    	.systemSettings {display: flex;}
+        .systemSettings form{align: center;display: inline-block;}
+    	.systemSettings button{width: 100%;}
+        
+    	.currentRun {border : 2px solid green}
+        .stateCurrentRun {display: flex;}
+        .stateCurrentRun form{align: center; display: inline-block;}
+        .currentRunSecondRow {display: flex;}
+        .currentRunSecondRow form{align: center;display: inline-block;}
+        
+        .led {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%; /* Makes it circular */
+            background-color: gray; /* Default color (off state) */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* Soft shadow */
         }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: center;
+        .led.on {
+            background-color: green; /* LED on color */
+            box-shadow: 0 0 2px green; /* Glow effect */
         }
-        th {
-            background-color: #f4f4f4;
+        .led.off {
+            background-color: red; /* LED off color */
+            box-shadow: 0 0 2px red; /* Glow effect */
         }
-        form {
-            width: 50%;
-            margin: 20px auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        input, button {
-            margin: 5px;
-            padding: 8px;
-            font-size: 1rem;
-            width: 80%;
-        }
-        img {
-            display: block;
-            margin: 20px auto;
-            width: 200px;
-            height: auto;
-        }
-        /* Styling for buttons */
-        .button-group {
-            display: flex;
-            justify-content: center;
-            gap: 0;
-            margin-top: 10px;
-        }
-        .button-group form {
-            margin: 0;/*display: inline-block;*/
-        }
-        .action-buttons {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 0;
-        }
-        .download-button {
-            margin-top: 20px;
-        }
+        
+        .adjustRun{border : 2px solid black; padding : 5px}
+        .changeImageGroup {border: 2px solid yellow; display: flex;justify-content: space-between;padding: 0px;width: 100%;}
+        .changeImageGroup form {align: center; display: inline-block;flex-grow: 1;}
+        .changeImageGroup button {
+    		width: 100%; /* Ensure buttons fill their forms */
+    		padding: 5px; /* Optional: adjust padding for better spacing */
+    		font-size: 1rem;
+			}
+        .adjustTimestamp {display: flex;flex-direction: column;align-items: center;margin-top: 0;border: 2px solid blue}
+        
+        .allRuns {border : 2px solid red}
+        table {width: 50%;margin: 20px auto;border-collapse: collapse;}
+        th, td {border: 1px solid #ddd;padding: 8px;text-align: center;}
+        th {background-color: #f4f4f4;}
+
+        form {width: 100%;margin: 2px auto;display: flex;flex-direction: column;align-items: center;}
+        input, button {margin: 5px;padding: 8px;font-size: 1rem;width: 80%;} 
+        .dataButtons {display: flex;}
+        .dataButtons form {align: center;display: inline-block;}
+        .dataButtons button{width: 100%;}
+        img {display: block;margin: 20px auto;width: 200px;height: auto;}
     </style>
 </head>
 <body>
-    <h1 style="text-align: center;">Run Table</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Start</th>
-                <th>Stop</th>
-                <th>Time</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in data %}
-            <tr>
-                <td>{{ row.ID }}</td>
-                <td>{{ row.Start }}</td>
-                <td>{{ row.Stop }}</td>
-                <td>{{ row.Time }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+	<div class = "systemSettings">
+    	<form action="/shutdown" method="POST">
+        	<button type="submit">Shutdown</button>
+        </form>
+        <form action="/mode" method="POST">
+        	<button type="submit">Change Mode</button>
+        </form>
+    </div>
+	<div class = "currentRun">
+    	<div class ="stateCurrentRun">
+        	<div id="led" class="led off"></div>
+            <p>time</p>
+            <div id="led" class="led off"></div>
+        </div>
+        <div class="currentRunSecondRow">
+    		<p> Start </p>
+        	<form action="/reset" method="POST">
+        		<button type="submit">Reset</button>
+        	</form>
+            <p> Stop </p>
+       	</div>
+    </div>
+    <script>
+        // Simulate toggling LED state
+        let isOn = false;
+        const led = document.getElementById('led');
 
-    <h2 style="text-align: center;">Actions</h2>
-    <box>
-        <div class="button-group">
+        setInterval(() => {
+            isOn = !isOn;
+            led.className = `led ${isOn ? 'on' : 'off'}`;
+        }, 1000); // Toggle every second
+    </script>
+    
+    <div class="adjustRun">
+        <div class="changeImageGroup">
             <form action="/previous" method="POST">
                 <button type="submit">Previous</button>
             </form>
@@ -92,20 +98,45 @@
             </form>
         </div>
 
-        <div class="action-buttons">
+        <div class="adjustTimestamp">
             <form action="/setNewTimestamp" method="POST">
-                <button type="submit">Set Image As Finish Timestamp</button>
+                <button type="submit">Set As Finish Timestamp</button>
             </form>
         </div>
-    </box>
-
-    <h2 style="text-align: center;">Image Display</h2>
-    <img src="{{ image_path }}" alt="Run Image">
-
-    <div class="download-button">
-        <form action="/download" method="POST">
-            <button type="submit">Download Data</button>
-        </form>
-    </div>  
+        <img src="{{ image_path }}" alt="Run Image">
+    </div>
+    
+    <div class="allRuns">
+    	<h1 style="text-align: center;">Previous Runs</h1>
+        <div class="dataButtons">
+        	<form action="/delete" method="POST">
+            	<button type="submit">Delete Data</button>
+        	</form>
+        	<form action="/download" method="POST">
+            	<button type="submit">Download Data</button>
+        	</form>
+    	</div>  
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Start</th>
+                    <th>Stop</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in data %}
+                <tr>
+                    <td>{{ row.ID }}</td>
+                    <td>{{ row.Start }}</td>
+                    <td>{{ row.Stop }}</td>
+                    <td>{{ row.Time }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
 </body>
 </html>
