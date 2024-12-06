@@ -84,6 +84,7 @@ def check_key_input():
             addInterut()
     except Exception as e:
         print(f"Error reading input: {e}")
+    QCoreApplication.processEvents()
     #finally:
     #    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, original_settings)
     
