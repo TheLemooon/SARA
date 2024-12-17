@@ -9,6 +9,7 @@ import FindMyIP as ip
 import sys
 import os
 import requests
+import werkzeug
 
 path = "./SavedRuns/"
 imgFormat = ".png"
@@ -18,7 +19,7 @@ data = [
 ]
 
 imageName = "0/0.png"
-myIp = "10.42.0.1"#ip.internal()
+myIp = ip.internal()#"10.42.0.1"#ip.internal()
 
 class WebSever(QThread):
     signalUpdateRunTime = pyqtSignal(int,int)
@@ -175,21 +176,19 @@ class WebSever(QThread):
         self.setup_routes()
         print(os.getcwd())
         while self.threadRunning: # Process pending events
-            self.app.run(host=myIp, port=5000, debug=False)#, use_reloader=False)#
+            self.app.run(host=myIp, port=5000, debug=False,threaded=False)#, use_reloader=False)#
+        print("serverloop terminated")
         self.led_states["led1"] ="green"
         self.led_states["led2"] ="green"
         
     def stop(self):
-        self.threadRunning = False
         print("shuting down server")
-        try:
-            import requests
-            requests.post(f'http://{myIp}:5000/shutdown')
-        except requests.exceptions.RequestException as e:
-            print(f"Error shutting down server: {e}")
+        self.threadRunning = False
+        doShutdown()
         print("terminating")
-        self.quit()
-        self.wait()
+        if not self.isRunning():
+            self.quit()
+        os._exit(0)
     
     @pyqtSlot(Run)
     def updateTable(self,run: Run):
@@ -202,8 +201,6 @@ class WebSever(QThread):
             self.set_image()
             self.currentTime = f"{run.getRunTime():.2f}"
             self.updateServer()
-            #redirect(url_for("home"))
-            #self.update_time(f"{run.getRunTime():.2f}")
             
     @pyqtSlot(Run)
     def updateRun(self,run: Run):
@@ -227,19 +224,19 @@ class WebSever(QThread):
         self.updateServer()
         
     def updateServer(self):
-        #change to socket script semms like bulshit
+        #change to socket script, semms like bulshit
         try:
             requests.post(f'http://{myIp}:5000/generalUpdate')
         except requests.exceptions.RequestException as e:
             print(f"Error calling update endpoint: {e}")
             
 def doShutdown():
+    print(request.environ)
     shutdown_func = request.environ.get('werkzeug.server.shutdown')
     if shutdown_func is None:
         print("notwerkzeufg")
     else:
         shutdown_func()
-        sys.exit(0)
 
 if __name__ == "__main__":
     # Instantiate and run the web application
