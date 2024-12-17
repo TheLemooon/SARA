@@ -17,7 +17,8 @@ class ImageArray:
         self.timestamps.pop(0)
         
     def calculateTime(self):
-        self.images[5] = cv.line(self.images[5], (320,0),(320,480),(0,255,0),9)
+        for img in self.images:
+            img = cv.line(img, (320,0),(320,480),(0,255,0),9)
         self.calculatedTime = datetime.now().time()#Do image processing
         self.calculatedIndex = 5
         

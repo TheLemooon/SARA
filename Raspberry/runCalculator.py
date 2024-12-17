@@ -138,6 +138,7 @@ class RunCalculator(QObject):
      
     @pyqtSlot()       
     def resetCurrentRun(self):
+        self.signalSendSerialMsg.emit("0,5\n") 
         if not self.runTable.runs[-1].isComplete():
             self.runTable.runs.pop(-1)
     
