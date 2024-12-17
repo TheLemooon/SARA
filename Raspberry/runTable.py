@@ -51,7 +51,10 @@ class RunTable:
                         os.rename(os.path.join(path,str(i)),os.path.join(path,str(i-indexDeviation)))
     
     def appendRun(self,run:Run):
-        self.lastIndex  +=1
+        self.lastIndex  = 0
+        print(len(self.runs))
+        if len(self.runs) > 0:
+            self.lastIndex  = self.runs[-1].getRunIndex() +1
         if run.getRunIndex() != self.lastIndex:
             run.setRunIndex(self.lastIndex)
         self.runs.append(run)

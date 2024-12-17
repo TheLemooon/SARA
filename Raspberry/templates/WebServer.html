@@ -69,7 +69,7 @@
         	<button type="submit">Shutdown</button>
         </form>
         <form action="/mode" method="POST">
-        	<button type="submit">Change Mode</button>
+        	<button type="submit">{{mode}}</button>
         </form>
     </div>
 	<div class = "currentRun">
@@ -108,7 +108,6 @@
     </div>
     
     <div class="allRuns">
-    	<h1 style="text-align: center;">Previous Runs</h1>
         <div class="dataButtons">
         	<form action="/delete" method="POST">
             	<button type="submit">Delete Data</button>

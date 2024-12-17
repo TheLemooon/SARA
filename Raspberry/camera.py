@@ -48,6 +48,7 @@ class CameraHandler(QThread):
             
     @pyqtSlot()
     def stopRecordingAndProcessImages(self):
+        print("recieved")
         self.returnImages = True       
         
     def sendImages(self):

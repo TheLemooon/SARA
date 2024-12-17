@@ -18,9 +18,15 @@ data = [
 ]
 
 imageName = "0/0.png"
+myIp = "10.42.0.1"#ip.internal()
 
 class WebSever(QThread):
     signalUpdateRunTime = pyqtSignal(int,int)
+    signalResetRun = pyqtSignal()
+    signalChangeMode = pyqtSignal()
+    signalPowerOff = pyqtSignal()
+    signalDeleteData = pyqtSignal()
+    signalDeleteRun = pyqtSignal()
     
     def __init__(self):
         super().__init__()
@@ -31,6 +37,8 @@ class WebSever(QThread):
         self.threadRunning = True
         self.led_states = {"led1": "green", "led2": "green"}
         self.currentTime = f"{float(0.0):.2f}"
+        self.idxToDelete = -1
+        self.mode = "Automatic"
         
     def setup_routes(self):
         """Define the routes for the web application."""
@@ -39,15 +47,21 @@ class WebSever(QThread):
         def home():
             """Handle displaying the table and processing form submissions."""
             reversed_data = list(reversed(self.runs))
-            return render_template("WebServer.html", data=reversed_data,image_path=self.image_path,led_states=self.led_states ,currentTIme = self.currentTime)
+            return render_template("WebServer.html", data=reversed_data,image_path=self.image_path,led_states=self.led_states ,currentTIme = self.currentTime, mode = self.mode)
         
         @self.app.route("/powerOff", methods=["POST"])
         def shutdown_route():
-            pass
+            self.signalPowerOff.emit()
+            return redirect(url_for("home"))
         
         @self.app.route("/mode", methods=["POST"])
         def mode_route():
-            pass
+            self.signalChangeMode.emit()
+            if self.mode == "Automatic":
+                self.mode = "Manual"
+            else:
+                self.mode = "Automatic"
+            return redirect(url_for("home"))
         
         @self.app.route("/set_led/<led>/<color>", methods=["POST"])
         def set_led(led, color):
@@ -65,7 +79,10 @@ class WebSever(QThread):
         
         @self.app.route("/reset", methods=["POST"])
         def reset_route():
-            pass
+            self.signalResetRun.emit()
+            self.changeRunIndicator(1)
+            self.currentTime = 0.0
+            return redirect(url_for("home"))
         
         @self.app.route("/next", methods=["POST"])
         def getNextImage_route():
@@ -87,7 +104,13 @@ class WebSever(QThread):
 
         @self.app.route("/delete", methods=["POST"])
         def delete_route():
-            pass
+            self.signalDeleteData.emit()
+        
+        @self.app.route("/deleteRun", methods=["POST"])
+        def deleteRun_route():
+            self.idxToDelete = self.currentRunIdx
+            self.signalDeleteRun(self.idxToDelete)
+            return redirect(url_for("home"))
         
         @self.app.route("/download", methods=["POST"])
         def download_data_route():
@@ -97,12 +120,8 @@ class WebSever(QThread):
         @self.app.route("/shutdown", methods=["POST"])
         def shutdown():
             """Trigger server shutdown."""
-            shutdown_func = request.environ.get('werkzeug.server.shutdown')
-            if shutdown_func:
-                shutdown_func()
-                sys.exit(0)
-            print("Server shutting down...")
-            return []
+            doShutdown()
+            return "Server shutting down..."
         
         @self.app.route('/SavedRuns/<path:filename>')
         def serve_run_image(filename):
@@ -156,7 +175,7 @@ class WebSever(QThread):
         self.setup_routes()
         print(os.getcwd())
         while self.threadRunning: # Process pending events
-            self.app.run(host=ip.internal(), port=5000, debug=False)#, use_reloader=False)#
+            self.app.run(host=myIp, port=5000, debug=False)#, use_reloader=False)#
         self.led_states["led1"] ="green"
         self.led_states["led2"] ="green"
         
@@ -165,7 +184,7 @@ class WebSever(QThread):
         print("shuting down server")
         try:
             import requests
-            requests.post(f'http://{ip.internal()}:5000/shutdown')
+            requests.post(f'http://{myIp}:5000/shutdown')
         except requests.exceptions.RequestException as e:
             print(f"Error shutting down server: {e}")
         print("terminating")
@@ -210,9 +229,17 @@ class WebSever(QThread):
     def updateServer(self):
         #change to socket script semms like bulshit
         try:
-            requests.post(f'http://{ip.internal()}:5000/generalUpdate')
+            requests.post(f'http://{myIp}:5000/generalUpdate')
         except requests.exceptions.RequestException as e:
             print(f"Error calling update endpoint: {e}")
+            
+def doShutdown():
+    shutdown_func = request.environ.get('werkzeug.server.shutdown')
+    if shutdown_func is None:
+        print("notwerkzeufg")
+    else:
+        shutdown_func()
+        sys.exit(0)
 
 if __name__ == "__main__":
     # Instantiate and run the web application
