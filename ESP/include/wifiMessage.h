@@ -9,7 +9,10 @@ enum MessageType
     autoInterut = 0x01,
     manualInterupt = 0x02,
     messageRecieved = 0x03,
+    runInProgress = 0x04,
+    runFinished = 0x05
 };
+
 
 class WifiMessage
 {
@@ -19,6 +22,7 @@ public:
     MessageType getMessage();
     uint8_t getDeviceId();
     MessageType convertHexToEnum(uint8_t val);
+    MessageType convertCharToEnum(char val);
 private:
     uint8_t deviceId;
     MessageType message;

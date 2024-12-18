@@ -6,6 +6,7 @@
 #include <thread>
 #include "dataExchange.h"
 #include <time.h>
+#include <esp_timer.h>
 
 struct recievedData //rename
 {
@@ -23,18 +24,26 @@ private:
     bool lightCurtanIsInterrupted = false;
     bool lightCurtanPreviouslyInterrupted = false;
 
-    bool wifiMessageRecieved = false;
+    bool wifiMessageRecieved = false;//to handle any wifi message
     uint8_t deviceId = 0x01;
     UartComm uartInterface;
     WifiMessage recievedMessage;
     std::vector<WifiMessage> messagesToSend;
     std::shared_ptr<WifiControll> wifiController;
     std::thread wifiThread;
-    DataExchange exchange;
+    
     std::vector<recievedData> interruptedDevices;
     float delay;
-    time_t startTime = 0;
+    unsigned long startTime = 0;
 
+    int lastKnownTimerInterruptCount =0;
+    bool communicationAlive = false;//to check if partner device alive
+
+    bool runIsInProgress = false;
+
+    void updateRunProgressLed();
+    void doTimerSpecificChecks();
+    bool connectionConsiderdDead();
     void readGPIOs();
     void handleMasterInteractions();
     void handleUartMessages();
@@ -43,9 +52,13 @@ private:
     bool hasNewMessage();
 
 public:
-    Processor(bool paramIsMasterDevice, uint8_t *recieverMa, uint8_t deviceIdc);
+    Processor(bool paramIsMasterDevice, uint8_t *recieverMa, uint8_t aDeviceId);
     ~Processor();
     void run();
+
+    
 };
+
+void timerHandler(void* arg);
 
 #endif

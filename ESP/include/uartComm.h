@@ -6,6 +6,9 @@ class UartComm
 {
 public:
     UartComm();
-    bool send(char* str);//std::shared_ptr<char> &str);
+    bool send(const char* str);
+    void processIncomingData();
+private:
+    void handleReceivedData(const char* data);
 };
 #endif

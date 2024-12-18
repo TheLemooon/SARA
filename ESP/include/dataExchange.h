@@ -18,4 +18,5 @@ public:
     void writeMessageRecieved(WifiMessage msg);
     WifiMessage readMessageRecieved();// const;
 };
+extern DataExchange exchange;
 #endif

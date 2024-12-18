@@ -10,7 +10,7 @@ void DataExchange::writeMessageToSend(WifiMessage msg)
     if(msg.getMessage() != MessageType::Empty)
     {
         dataToSend.push_back(msg);
-        Serial.println(dataToSend.back().getMessage());
+        //Serial.println(dataToSend.back().getMessage());
     }
 }
 

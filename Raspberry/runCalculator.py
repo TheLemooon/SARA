@@ -18,7 +18,7 @@ class RunCalculator(QObject):
         super().__init__()
         self.runs = [] #start, stop, 
         self.runTable = RunTable()
-        self.deviceList = np.array([1,0])#front = startdevice end = goalDevice
+        self.deviceList = np.array([2,1])#front = startdevice end = goalDevice
         self.requestedIndex = -1 #imageproccessing started
         self.threadRunning = True
         
