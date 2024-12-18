@@ -9,7 +9,11 @@
         .systemSettings form{align: center;display: inline-block;}
     	.systemSettings button{width: 100%;}
         
-    	.currentRun {border : 2px solid green}
+    	.currentRun {border : 2px solid green;  display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0px 0;}
         .stateCurrentRun {display: flex;}
         .stateCurrentRun form{align: center; display: inline-block;}
         .currentRunSecondRow {display: flex;}
@@ -25,6 +29,11 @@
         .led.on {
             background-color: green; /* LED on color */
             box-shadow: 0 0 2px green; /* Glow effect */
+        }
+        .time-display {
+            margin: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
         }
         .led.off {
             background-color: red; /* LED off color */
@@ -56,18 +65,20 @@
 </head>
 <body>
 	<div class = "systemSettings">
-    	<form action="/shutdown" method="POST">
+    	<form action="/powerOff" method="POST">
         	<button type="submit">Shutdown</button>
         </form>
         <form action="/mode" method="POST">
-        	<button type="submit">Change Mode</button>
+        	<button type="submit">{{mode}}</button>
         </form>
     </div>
 	<div class = "currentRun">
     	<div class ="stateCurrentRun">
-        	<div id="led" class="led off"></div>
-            <p>time</p>
-            <div id="led" class="led off"></div>
+        	<div class="led" style="background-color: {{ led_states['led1'] }};"></div>
+            <div class="time-display" style="text-align: center;">
+                Time: {{ currentTIme }}
+            </div>
+            <div class="led" style="background-color: {{ led_states['led2'] }};"></div>
         </div>
         <div class="currentRunSecondRow">
     		<p> Start </p>
@@ -77,16 +88,6 @@
             <p> Stop </p>
        	</div>
     </div>
-    <script>
-        // Simulate toggling LED state
-        let isOn = false;
-        const led = document.getElementById('led');
-
-        setInterval(() => {
-            isOn = !isOn;
-            led.className = `led ${isOn ? 'on' : 'off'}`;
-        }, 1000); // Toggle every second
-    </script>
     
     <div class="adjustRun">
         <div class="changeImageGroup">
@@ -107,7 +108,6 @@
     </div>
     
     <div class="allRuns">
-    	<h1 style="text-align: center;">Previous Runs</h1>
         <div class="dataButtons">
         	<form action="/delete" method="POST">
             	<button type="submit">Delete Data</button>
@@ -137,6 +137,19 @@
             </tbody>
         </table>
     </div>
+    <script>
+        // Periodically check for updates (every 5 seconds)
+        setInterval(() => {
+            fetch('/generalUpdate', { method: 'POST' })
+                .then(response => {
+                    if (response.ok) {
+                        // Reload the page when an update is received
+                        window.location.reload();
+                    }
+                })
+                .catch(error => console.error('Error checking for updates:', error));
+        }, 5000); // Check every 5000ms (5 seconds)
+    </script>
     
 </body>
 </html>

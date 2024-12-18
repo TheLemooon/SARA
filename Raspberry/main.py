@@ -3,6 +3,7 @@ import signal
 
 from imageArray import ImageArray
 from runCalculator import RunCalculator
+from run import Mode
 
 from subprocess import call
 from datetime import datetime, timedelta
@@ -15,10 +16,9 @@ import select
 original_settings = termios.tcgetattr(sys.stdin)
 
 def __main__():
-    """Start the server and wait until it's done."""
     signal.signal(signal.SIGINT, handle_ctrl_c)
-    global calculator, camera, server, serial,calculator_thread, master
-    master = True
+    global calculator, calculator_thread, master#camera, server, serial,
+    master = False
     
     app = QCoreApplication(sys.argv)
     timer = QTimer()
@@ -62,10 +62,10 @@ def addInterut():
     global master, calculator
     if master:
         master = False
-        calculator.addInterrupt(1,datetime.now().time(),True)
+        calculator.addInterrupt(1,datetime.now().time(),Mode.AutomaticTrigger)
     else:
         master = True   
-        calculator.addInterrupt(0,datetime.now().time(),True)
+        calculator.addInterrupt(2,datetime.now().time(),Mode.ManualTrigger)
         
 def periodic_processing():
     """Simulate periodic non-blocking processing."""
@@ -84,25 +84,9 @@ def check_key_input():
             addInterut()
     except Exception as e:
         print(f"Error reading input: {e}")
+    QCoreApplication.processEvents()
     #finally:
     #    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, original_settings)
-    
-#def check_key_input():
-    """Check if the 'A' key is pressed."""
-    """try:
-    #print("processing")
-        tty.setcbreak(sys.stdin.fileno())
-        if select.select([sys.stdin], [], [], 0)[0]:  # Non-blocking check
-            key = sys.stdin.read(1)
-            print(key)
-            if key == 'a':
-                addInterut()
-    #print("procA")
-    finally:
-        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, original_settings)  # Restore terminal settings
-        QCoreApplication.processEvents()
-    #except Exception as e:
-    #    print(f"Error e: {e}")"""
     
 if __name__ == "__main__":
     __main__()

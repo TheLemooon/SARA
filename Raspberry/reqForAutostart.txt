@@ -1,0 +1,4 @@
+sudo chmod +x autostartMain.sh
+crontab -e
+
+add: @reboot  /home/luca/git/SARA/Raspberry/autostartMain.sh

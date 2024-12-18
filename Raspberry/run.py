@@ -2,24 +2,33 @@ from imageArray import ImageArray
 from datetime import time
 import cv2 as cv
 import os
+from enum import Enum
+#from runCalculator import Mode
 
 path = "SavedRuns/"
 imgFormat = ".png"
 
+class Mode(Enum):
+    AutomaticTrigger = 1
+    ManualTrigger = 2
+    
 class Run:
     def __init__(self):
         self.start = 0
         self.stop = 0
         self.times = []
-        self.automaticStart = True
+        self.automaticStart = Mode.AutomaticTrigger
         self.imageTimes = []
         self.runIndex = -1
         self.imageCount = 0
         self.calculatedIndex = -1
         
-    def setStart(self, startTime, automatic):
+    def setStart(self, startTime, automatic:Mode):
         self.start = startTime
         self.automaticStart = automatic
+        
+    def resetStart(self):
+        self.start = 0
         
     def addTime(self, time):
         self.times.append(time)
