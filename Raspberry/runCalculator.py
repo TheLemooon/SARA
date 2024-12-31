@@ -1,13 +1,20 @@
 import numpy as np
+from datetime import date
+import time
+import subprocess
+import os
+from PyQt5.QtCore import QObject, pyqtSignal, QThread, pyqtSlot, Qt, QCoreApplication,  QTimer
+from INA219 import INA219
+
 from run import Run, Mode
 from runTable import RunTable
 from camera import CameraHandler
 from server import WebSever
 from SerialInterface import SerialReader
 from imageArray import ImageArray
-from datetime import datetime
-import time
-from PyQt5.QtCore import QObject, pyqtSignal, QThread, pyqtSlot, Qt, QCoreApplication,  QTimer
+
+runTimeoutMs = 600000# in ms
+accuUpdateIntervalMs = 60000#in ms
 
 class RunCalculator(QObject):
     signalNewRun = pyqtSignal(Run) #device id, time since interrupt, is auto interrupt
@@ -15,6 +22,7 @@ class RunCalculator(QObject):
     signalRequestingImages = pyqtSignal()
     signalChangeRunIndicator = pyqtSignal(int)
     signalSendSerialMsg = pyqtSignal(str)
+    signalAccuUpdate = pyqtSignal(float)
     
     def __init__(self):
         super().__init__()
@@ -25,7 +33,10 @@ class RunCalculator(QObject):
         self.threadRunning = True
         self.mode = Mode.AutomaticTrigger
         self.timer = QTimer()
-        self.timer.singleShot(2,self.runTimerout)
+        self.timer.singleShot(runTimeoutMs,self.runTimerout)
+        self.accuTimer = QTimer()
+        self.accuTimer.setInterval(accuUpdateIntervalMs)#1min
+        self.accuTimer.timeout.connect(self.updateAkkuPercentage)
         
         self.camera = CameraHandler()
         self.server = WebSever()
@@ -34,6 +45,11 @@ class RunCalculator(QObject):
         self.camera.start()
         self.serial.start()
         self.server.start()
+        time.sleep(1000)#guarantees that webserver is running
+        
+        self.ic2Connection = INA219(addr=0x41)
+        self.updateAkkuPercentage()
+        self.accuTimer.start(accuUpdateIntervalMs)
     
     @pyqtSlot(int,object,Mode)
     def addInterrupt(self,id,time,isAutomatic):
@@ -48,7 +64,9 @@ class RunCalculator(QObject):
                     run = Run()
                     self.runTable.appendRun(run)#ImageArray is Placeholder
                 self.runTable.runs[-1].setStart(time,isAutomatic)
+                self.runTable.runs[-1].setDate(date.today())
                 self.signalChangeRunIndicator.emit(2)
+                self.timer.singleShot(runTimeoutMs,self.runTimerout)
                 self.timer.start()
                 self.signalSendSerialMsg.emit("0,4\n") 
             
@@ -71,9 +89,12 @@ class RunCalculator(QObject):
                 print("first run")
                 run = Run()
                 run.setStart(time,isAutomatic)
+                run.setDate(date.today())
                 self.runTable.appendRun(run)#ImageArray is Placeholder
                 self.signalChangeRunIndicator.emit(2)
-                #self.signalSendSerialMsg.emit("0,4\n") 
+                self.timer.singleShot(runTimeoutMs,self.runTimerout)
+                self.timer.start()
+                self.signalSendSerialMsg.emit("0,4\n") 
     
     @pyqtSlot(int,int)  
     def adjustStopTime(self, runNr, imageNumber):
@@ -105,9 +126,6 @@ class RunCalculator(QObject):
         while self.threadRunning:
             self.thread().msleep(10)
             QCoreApplication.processEvents()
-            #time.sleep(1)
-            #QCoreApplication.processEvents() 
-            #TODO implement active event loop for qt queuedConnection may work if interuupts arent adde whilst staring up
         
     def stop(self):
         print("stoping runcalculator")
@@ -116,6 +134,9 @@ class RunCalculator(QObject):
         self.serial.stop() 
         self.server.stop()
         self.threadRunning = False
+        #subprocess.call(["sudo","shutdown"])
+        print("shutdownCalled")
+        os._exit(0)
         
     def connectSignals(self):
         self.signalNewRun.connect(self.server.updateTable)
@@ -130,6 +151,7 @@ class RunCalculator(QObject):
         self.server.signalPowerOff.connect(self.powerOff, Qt.DirectConnection)
         self.server.signalDeleteData.connect(self.deleteAllRuns, Qt.DirectConnection)
         self.signalSendSerialMsg.connect(self.serial.write_to_serial)#, Qt.DirectConnection)
+        self.signalAccuUpdate.connect(self.server.updateAccu)
         
     def loadRuns(self):
         self.runTable.loadRuns()
@@ -139,7 +161,8 @@ class RunCalculator(QObject):
     @pyqtSlot()       
     def resetCurrentRun(self):
         self.signalSendSerialMsg.emit("0,5\n") 
-        if not self.runTable.runs[-1].isComplete():
+        self.signalChangeRunIndicator.emit(1)
+        if len(self.runTable.runs) > 0 and not self.runTable.runs[-1].isComplete():
             self.runTable.runs.pop(-1)
     
     @pyqtSlot()
@@ -162,3 +185,16 @@ class RunCalculator(QObject):
         print("timeout")
         self.resetCurrentRun()
         # doesent have rest of webserver led
+        
+    @pyqtSlot()
+    def updateAkkuPercentage(self):
+        bus_voltage = self.ic2Connection.getBusVoltage_V()             # voltage on V- (load side)
+        self.accuPercentage = (bus_voltage - 9)/3.6*100
+        if(self.accuPercentage > 100):self.accuPercentage = 100
+        if(self.accuPercentage < 0):self.accuPercentage = 0
+        print(self.accuPercentage)
+        self.signalAccuUpdate.emit(self.accuPercentage)
+        if self.accuPercentage < 5.0 :
+            time.sleep(2)
+            self.stop()
+        

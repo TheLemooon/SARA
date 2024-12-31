@@ -64,10 +64,14 @@
     </style>
 </head>
 <body>
+    <div class="view">
 	<div class = "systemSettings">
     	<form action="/powerOff" method="POST">
         	<button type="submit">Shutdown</button>
         </form>
+            <div>
+                <img src="{{ accuStateImage }}" alt="Run Image">
+            </div>
         <form action="/mode" method="POST">
         	<button type="submit">{{mode}}</button>
         </form>
@@ -98,7 +102,6 @@
                 <button type="submit">Next</button>
             </form>
         </div>
-
         <div class="adjustTimestamp">
             <form action="/setNewTimestamp" method="POST">
                 <button type="submit">Set As Finish Timestamp</button>
@@ -120,8 +123,7 @@
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Start</th>
-                    <th>Stop</th>
+                        <th>Date</th>
                     <th>Time</th>
                 </tr>
             </thead>
@@ -129,13 +131,13 @@
                 {% for row in data %}
                 <tr>
                     <td>{{ row.ID }}</td>
-                    <td>{{ row.Start }}</td>
-                    <td>{{ row.Stop }}</td>
+                        <td>{{ row.Date }}</td>
                     <td>{{ row.Time }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+        </div>
     </div>
     <script>
         // Periodically check for updates (every 5 seconds)

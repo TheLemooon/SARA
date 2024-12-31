@@ -8,8 +8,8 @@ pipeline = ("libcamerasrc ! video/x-raw, width=640, height=480, framerate=30/1 !
     "videoconvert ! appsink"
     )
 
-imageCountBevorInterupt = 5
-imageCountAfterInterupt = 30
+imageCountBevorInterupt = 15
+imageCountAfterInterupt = 15
 
 class CameraHandler(QThread):
     signalImagesProcessed = pyqtSignal(ImageArray)

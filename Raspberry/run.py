@@ -16,6 +16,7 @@ class Run:
     def __init__(self):
         self.start = 0
         self.stop = 0
+        self.date = 0
         self.times = []
         self.automaticStart = Mode.AutomaticTrigger
         self.imageTimes = []
@@ -26,6 +27,12 @@ class Run:
     def setStart(self, startTime, automatic:Mode):
         self.start = startTime
         self.automaticStart = automatic
+        
+    def setDate(self, date):
+        self.date = date
+        
+    def getDate(self):
+        return self.date
         
     def resetStart(self):
         self.start = 0

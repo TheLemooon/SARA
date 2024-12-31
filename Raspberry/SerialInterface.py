@@ -25,6 +25,7 @@ class SerialReader(QThread):
         self.thread().setPriority(QThread.HighPriority)#TimeCriticalPriority)
         self.lock = threading.Lock()
         self.writeTime = None
+        print("serialisInit")
 
     @pyqtSlot(str)
     def write_to_serial(self, data:str):

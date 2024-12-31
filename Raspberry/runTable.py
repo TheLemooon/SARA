@@ -19,6 +19,7 @@ class RunTable:
                 data = list(reader)  
             for line in data:
                 run = Run()
+                run.date = convertToDate(line.pop(0))
                 run.start = convertToDatetime(line.pop(0))
                 run.stop = convertToDatetime(line.pop(0))
                 run.automaticStart = line.pop(0)
@@ -42,7 +43,7 @@ class RunTable:
                 writer = csv.writer(file)
                 for i in range(0+indexDeviation ,len(self.runs) + indexDeviation):
                     run = self.runs[i]
-                    data = [run.start, run.stop, run.automaticStart, run.runIndex, run.imageCount, run.calculatedIndex]
+                    data = [run.date, run.start, run.stop, run.automaticStart, run.runIndex, run.imageCount, run.calculatedIndex]
                     for t in run.imageTimes:
                         data.append(t)
                     if run.isComplete():
@@ -73,4 +74,7 @@ class RunTable:
     
 def convertToDatetime(timestamp):
     return datetime.strptime(timestamp, '%H:%M:%S.%f').time()
+
+def convertToDate(date):
+    return datetime.strptime(date, "%Y-%m-%d").date()
     

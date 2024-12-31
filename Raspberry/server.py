@@ -40,6 +40,8 @@ class WebSever(QThread):
         self.currentTime = f"{float(0.0):.2f}"
         self.idxToDelete = -1
         self.mode = "Automatic"
+        self.accuImage = "static/accu00.png"
+        print("serverIsInit")
         
     def setup_routes(self):
         """Define the routes for the web application."""
@@ -48,7 +50,9 @@ class WebSever(QThread):
         def home():
             """Handle displaying the table and processing form submissions."""
             reversed_data = list(reversed(self.runs))
-            return render_template("WebServer.html", data=reversed_data,image_path=self.image_path,led_states=self.led_states ,currentTIme = self.currentTime, mode = self.mode)
+            return render_template("WebServer.html", data=reversed_data,image_path=self.image_path,
+                                   led_states=self.led_states ,currentTIme = self.currentTime,
+                                   mode = self.mode, accuStateImage=self.accuImage)
         
         @self.app.route("/powerOff", methods=["POST"])
         def shutdown_route():
@@ -121,7 +125,7 @@ class WebSever(QThread):
         @self.app.route("/shutdown", methods=["POST"])
         def shutdown():
             """Trigger server shutdown."""
-            doShutdown()
+            self.doShutdown()
             return "Server shutting down..."
         
         @self.app.route('/SavedRuns/<path:filename>')
@@ -132,12 +136,12 @@ class WebSever(QThread):
         def generalUdate():
             return redirect(url_for("home"))
 
-    def add_entry(self, entry_id, startTime, stopTime,time):
+    def add_entry(self, entry_id, date,time):
         """Add a new entry to the data."""
         if entry_id > len(self.runs) -1:
-            self.runs.append({"ID": entry_id, "Start": startTime, "Stop": stopTime, "Time": time})
+            self.runs.append({"ID": entry_id, "Date": date, "Time": time})
         else:
-            self.runs[entry_id] = {"ID": entry_id, "Start": startTime, "Stop": stopTime, "Time": time}
+            self.runs[entry_id] = {"ID": entry_id, "Date": date, "Time": time}
 
     def previousImage(self):
         self.currentImageIdx -=1
@@ -184,17 +188,17 @@ class WebSever(QThread):
     def stop(self):
         print("shuting down server")
         self.threadRunning = False
-        doShutdown()
+        self.doShutdown()
         print("terminating")
         if not self.isRunning():
             self.quit()
-        os._exit(0)
+        #os._exit(0)
     
     @pyqtSlot(Run)
     def updateTable(self,run: Run):
         print("recieved")
         if run.isComplete():
-            self.add_entry(run.runIndex,run.getStartTime(),run.getStopTime(),f"{run.getRunTime():.2f}")
+            self.add_entry(run.runIndex,run.getDate(),f"{run.getRunTime():.2f}")
             print("update set Image")
             self.currentRunIdx = run.runIndex
             self.currentImageIdx = run.getCalculatedIndex()
@@ -221,6 +225,14 @@ class WebSever(QThread):
         else:
             #change in to enum so this wont even be triggerd
             pass
+        #self.socketio.emit("update_leds", self.led_states)
+        self.updateServer()
+        
+    @pyqtSlot(float)
+    def updateAccu(self,accuPercent):
+        val = int(accuPercent/10)
+        self.accuImage =f'static/accu{val}0.png'
+        #self.socketio.emit("update_accu_image", {"accuStateImage": self.accuImage})
         self.updateServer()
         
     def updateServer(self):
@@ -230,13 +242,13 @@ class WebSever(QThread):
         except requests.exceptions.RequestException as e:
             print(f"Error calling update endpoint: {e}")
             
-def doShutdown():
-    print(request.environ)
-    shutdown_func = request.environ.get('werkzeug.server.shutdown')
-    if shutdown_func is None:
-        print("notwerkzeufg")
-    else:
-        shutdown_func()
+    def doShutdown(self):
+        print(request.environ)
+        shutdown_func = request.environ.get('werkzeug.server.shutdown')
+        if shutdown_func is None:
+            print("notwerkzeufg")
+        else:
+            shutdown_func()
 
 if __name__ == "__main__":
     # Instantiate and run the web application

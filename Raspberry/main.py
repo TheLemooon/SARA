@@ -5,7 +5,7 @@ from imageArray import ImageArray
 from runCalculator import RunCalculator
 from run import Mode
 
-from subprocess import call
+import subprocess 
 from datetime import datetime, timedelta
 
 import termios
@@ -13,10 +13,12 @@ import tty
 import sys
 import select
 
-original_settings = termios.tcgetattr(sys.stdin)
+#original_settings = termios.tcgetattr(sys.stdin)
+isScript = True
 
 def __main__():
-    signal.signal(signal.SIGINT, handle_ctrl_c)
+    if not isScript:
+        signal.signal(signal.SIGINT, handle_ctrl_c)
     global calculator, calculator_thread, master#camera, server, serial,
     master = False
     
@@ -26,8 +28,9 @@ def __main__():
     #timer.timeout.connect(lambda: None)  # Keeps the event loop running and checks for interrupts
     timer.start(100)
     
-    notifier = QSocketNotifier(sys.stdin.fileno(), QSocketNotifier.Read)
-    notifier.activated.connect(check_key_input)
+    if not isScript:
+        notifier = QSocketNotifier(sys.stdin.fileno(), QSocketNotifier.Read)
+        notifier.activated.connect(check_key_input)
     
     calculator = RunCalculator()
     calculator_thread = QThread()
@@ -41,6 +44,9 @@ def __main__():
     #calculator.addInterrupt(2,datetime.now().time(),True)
     #sys.exit(app.exec_())
     sys.exit(QCoreApplication.exec_())
+    #doesent get called
+    #subprocess.call(["sudo","shutdown"])
+    #print("shutdowncall2")
     
 def handle_ctrl_c(signal_received, frame):
     """Custom handler for Ctrl+C."""
@@ -74,16 +80,17 @@ def periodic_processing():
         
 def check_key_input():
     """Check if the 'A' key is pressed."""
-    try:
-        tty.setcbreak(sys.stdin.fileno())
+    if not isScript:
+        try:
+            tty.setcbreak(sys.stdin.fileno())
         
-        #termios.tcflush(sys.stdin, termios.TCIFLUSH)
+            #termios.tcflush(sys.stdin, termios.TCIFLUSH)
         
-        key = sys.stdin.read(1)
-        if key.lower() == 'a':
-            addInterut()
-    except Exception as e:
-        print(f"Error reading input: {e}")
+            key = sys.stdin.read(1)
+            if key.lower() == 'a':
+                addInterut()
+        except Exception as e:
+            print(f"Error reading input: {e}")
     QCoreApplication.processEvents()
     #finally:
     #    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, original_settings)
