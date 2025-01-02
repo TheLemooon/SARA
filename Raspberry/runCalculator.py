@@ -134,7 +134,7 @@ class RunCalculator(QObject):
         self.serial.stop() 
         self.server.stop()
         self.threadRunning = False
-        #subprocess.call(["sudo","shutdown"])
+        subprocess.call(["sudo","shutdown"])
         print("shutdownCalled")
         os._exit(0)
         
