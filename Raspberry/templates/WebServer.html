@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Table</title>
+    <script src="/static/js/socket.io.min.js" defer></script>
     <style>
     	.systemSettings {display: flex;}
         .systemSettings form{align: center;display: inline-block;}
@@ -65,93 +66,154 @@
 </head>
 <body>
     <div class="view">
-	<div class = "systemSettings">
-    	<form action="/powerOff" method="POST">
-        	<button type="submit">Shutdown</button>
-        </form>
-            <div>
-                <img src="{{ accuStateImage }}" alt="Run Image">
+	    <div class = "systemSettings">
+    	    <form action="/powerOff" method="POST">
+            	<button type="submit">Shutdown</button>
+            </form>
+                <div>
+                    <img id="accuImage" src="{{ accuStateImage }}" alt="Run Image">
+                </div>
+            <form action="/mode" method="POST">
+        	    <button type="submit">{{mode}}</button>
+            </form>
+        </div>
+	    <div class = "currentRun">
+    	    <div class ="stateCurrentRun">
+        	    <div class="led" id="led1" style="background-color: {{ led_states['led1'] }};"></div>
+                <div class="time-display" style="text-align: center;">
+                    Time: {{ currentTIme }}
+                </div>
+                <div class="led" id="led2" style="background-color: {{ led_states['led2'] }};"></div>
             </div>
-        <form action="/mode" method="POST">
-        	<button type="submit">{{mode}}</button>
-        </form>
-    </div>
-	<div class = "currentRun">
-    	<div class ="stateCurrentRun">
-        	<div class="led" style="background-color: {{ led_states['led1'] }};"></div>
-            <div class="time-display" style="text-align: center;">
-                Time: {{ currentTIme }}
+            <div class="currentRunSecondRow">
+    		    <p> Start </p>
+            	<form action="/reset" method="POST">
+            		<button type="submit">Reset</button>
+            	</form>
+                <p> Stop </p>
+           	</div>
+        </div>
+    
+        <div class="adjustRun">
+            <div class="changeImageGroup">
+                <form action="/previous" method="POST">
+                    <button type="submit">Previous</button>
+                </form>
+                <form action="/next" method="POST">
+                    <button type="submit">Next</button>
+                </form>
             </div>
-            <div class="led" style="background-color: {{ led_states['led2'] }};"></div>
+            <div class="adjustTimestamp">
+                <form action="/setNewTimestamp" method="POST">
+                    <button type="submit">Set As Finish Timestamp</button>
+                </form>
+            </div>
+            <img src="{{ image_path }}" alt="Run Image">
         </div>
-        <div class="currentRunSecondRow">
-    		<p> Start </p>
-        	<form action="/reset" method="POST">
-        		<button type="submit">Reset</button>
-        	</form>
-            <p> Stop </p>
-       	</div>
-    </div>
     
-    <div class="adjustRun">
-        <div class="changeImageGroup">
-            <form action="/previous" method="POST">
-                <button type="submit">Previous</button>
-            </form>
-            <form action="/next" method="POST">
-                <button type="submit">Next</button>
-            </form>
+        <div class="allRuns">
+            <div class="dataButtons">
+            	<form action="/delete" method="POST">
+                	<button type="submit">Delete Data</button>
+            	</form>
+            	<form action="/download" method="POST">
+                	<button type="submit">Download Data</button>
+        	    </form>
+        	</div>  
+            <table id="runsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                            <th>Date</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in data %}
+                    <tr>
+                        <td>{{ row.ID }}</td>
+                            <td>{{ row.Date }}</td>
+                        <td>{{ row.Time }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-        <div class="adjustTimestamp">
-            <form action="/setNewTimestamp" method="POST">
-                <button type="submit">Set As Finish Timestamp</button>
-            </form>
-        </div>
-        <img src="{{ image_path }}" alt="Run Image">
-    </div>
+    </div> 
+    <script type="text/javascript">
+        var socket
+        document.addEventListener('DOMContentLoaded', function() {
+            // Connect to the WebSocket
+            if(!socket){
+            socket = io.connect('http://192.168.1.12:5000');}
+
+            socket.on('connect', function() {
+                console.log('Connected to the server');
+            });
+            
+            console.log('Setting up socket event listeners');
+
+            socket.on('test', function(dat) {
+                console.log('recieved',dat);
+            });
+            // Listen for the 'update_data' event from the server
+            socket.on('update_data', function(data) {
+                console.log('Received updated data:', data);
+
+                // Get the table body element
+                const tbody = document.querySelector('#runsTable tbody');
+
+                // Clear the existing table rows
+                tbody.innerHTML = '';
+
+                // Loop through the new data and add rows to the table
+                data.data.forEach(function(row) {
+                    const tr = document.createElement('tr');
+                
+                    // Create a table cell for each column in the row
+                    const tdId = document.createElement('td');
+                    tdId.textContent = row.ID;
+                    const tdDate = document.createElement('td');
+                    tdDate.textContent = row.Date;
+                    const tdTime = document.createElement('td');
+                    tdTime.textContent = row.Time;
+
+                    // Append the cells to the row
+                    tr.appendChild(tdId);
+                    tr.appendChild(tdDate);
+                    tr.appendChild(tdTime);
+
+                    // Append the row to the table body
+                    tbody.appendChild(tr);
+                });
+            });
     
-    <div class="allRuns">
-        <div class="dataButtons">
-        	<form action="/delete" method="POST">
-            	<button type="submit">Delete Data</button>
-        	</form>
-        	<form action="/download" method="POST">
-            	<button type="submit">Download Data</button>
-        	</form>
-    	</div>  
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                        <th>Date</th>
-                    <th>Time</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in data %}
-                <tr>
-                    <td>{{ row.ID }}</td>
-                        <td>{{ row.Date }}</td>
-                    <td>{{ row.Time }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        </div>
-    </div>
-    <script>
-        // Periodically check for updates (every 5 seconds)
-        setInterval(() => {
-            fetch('/generalUpdate', { method: 'POST' })
-                .then(response => {
-                    if (response.ok) {
-                        // Reload the page when an update is received
-                        window.location.reload();
-                    }
-                })
-                .catch(error => console.error('Error checking for updates:', error));
-        }, 5000); // Check every 5000ms (5 seconds)
-    </script>
-    
+            // Listen for 'update_leds' event from the server
+            socket.on('update_leds', function(data) {
+                console.log('Updated LED states:', data);
+
+                // Update the background color of the LED divs based on received states
+                document.getElementById('led1').style.backgroundColor = data.led1;
+                document.getElementById('led2').style.backgroundColor = data.led2;
+            });
+
+            // Listen for image updates
+            socket.on('update_image', (image_path) => {
+                console.log("Received updated image path:", image_path);
+                const imgElement = document.querySelector("img#dynamic-image");
+                if (imgElement) {
+                    imgElement.src = image_path;
+                }
+            });
+
+            // Listen for the 'update_accu_image' event
+            socket.on('update_accu_image', function(data) {
+                console.log('Received image path:', data.accuStateImage);
+
+                // Update the 'src' of the image with the new path received from the server
+                document.getElementById('accuImage').src = data.accuStateImage;
+            });
+        });
+    </script> 
 </body>
 </html>

@@ -1,15 +1,18 @@
 from flask import Flask, render_template, request, redirect, url_for, send_file, Response, send_from_directory
+from flask_socketio import SocketIO, emit
+
 import csv
 import os
 from run import Run
 from imageArray import ImageArray
-from PyQt5.QtCore import QObject, pyqtSignal, QThread, pyqtSlot
+from PyQt5.QtCore import QObject, pyqtSignal, QThread, pyqtSlot, QCoreApplication
 import cv2 as cv
 import FindMyIP as ip
 import sys
 import os
 import requests
 import werkzeug
+import datetime
 
 path = "./SavedRuns/"
 imgFormat = ".png"
@@ -31,6 +34,9 @@ class WebSever(QThread):
     
     def __init__(self):
         super().__init__()
+        self.app = Flask(__name__)
+        self.app.config['SECRET_KEY']="Sara"
+        self.socketio = SocketIO(self.app, logger=True, cors_allowed_origins="*")
         self.runs = data
         self.currentRunIdx = 0
         self.currentImageIdx = 0
@@ -45,6 +51,18 @@ class WebSever(QThread):
         
     def setup_routes(self):
         """Define the routes for the web application."""
+        
+        @self.socketio.on('connect')
+        def handle_connect(auth):
+            print('Client connected', request.sid)
+            
+        @self.socketio.on('/testing')
+        def idk(a):
+            print('server recievd something',a)
+
+        @self.socketio.on('message')
+        def handle_message(data):
+            print('Received message:', data)
 
         @self.app.route("/", methods=["GET", "POST"])
         def home():
@@ -139,7 +157,8 @@ class WebSever(QThread):
     def add_entry(self, entry_id, date,time):
         """Add a new entry to the data."""
         if entry_id > len(self.runs) -1:
-            self.runs.append({"ID": entry_id, "Date": date, "Time": time})
+            self.runs.append({"ID": entry_id, "Date": date.isoformat() if isinstance(date, datetime.date) else date, "Time": time})
+            #self.runs.append({"ID": entry_id, "Date": date, "Time": time})
         else:
             self.runs[entry_id] = {"ID": entry_id, "Date": date, "Time": time}
 
@@ -173,17 +192,17 @@ class WebSever(QThread):
         pth = f"{self.currentRunIdx}/{self.currentImageIdx}{imgFormat}"
         print(f"Setting image path to: {pth}")
         self.image_path = f"/SavedRuns/{pth}"
+        self.socketio.emit('update_image', {'image_path': self.image_path})
 
     def run(self):
         """Start the Flask web server."""
-        self.app = Flask(__name__)
         self.setup_routes()
         print(os.getcwd())
         while self.threadRunning: # Process pending events
-            self.app.run(host=myIp, port=5000, debug=False,threaded=False)#, use_reloader=False)#
+            #QCoreApplication.processEvents()  # This will allow PyQt to process events
+            self.socketio.run(self.app, host=myIp, port=5000, debug=False)#, log_output=True)#,threaded=True)#, use_reloader=False)#
+            #QThread.msleep(50) 
         print("serverloop terminated")
-        self.led_states["led1"] ="green"
-        self.led_states["led2"] ="green"
         
     def stop(self):
         print("shuting down server")
@@ -204,7 +223,9 @@ class WebSever(QThread):
             self.currentImageIdx = run.getCalculatedIndex()
             self.set_image()
             self.currentTime = f"{run.getRunTime():.2f}"
-            self.updateServer()
+            self.socketio.emit('update_data', {'data': self.runs})
+            print("data updated")
+            #self.updateServer()
             
     @pyqtSlot(Run)
     def updateRun(self,run: Run):
@@ -225,15 +246,17 @@ class WebSever(QThread):
         else:
             #change in to enum so this wont even be triggerd
             pass
-        #self.socketio.emit("update_leds", self.led_states)
-        self.updateServer()
+        self.socketio.emit('update_leds', self.led_states)
+        self.socketio.emit('testing', "idk")
+        #self.updateServer()
         
     @pyqtSlot(float)
     def updateAccu(self,accuPercent):
         val = int(accuPercent/10)
         self.accuImage =f'static/accu{val}0.png'
-        #self.socketio.emit("update_accu_image", {"accuStateImage": self.accuImage})
-        self.updateServer()
+        self.socketio.emit('update_accu_image', {'accuStateImage': self.accuImage})
+        self.socketio.emit('test_event', {'message': 'Hello, client!'})
+        #self.updateServer()
         
     def updateServer(self):
         #change to socket script, semms like bulshit
