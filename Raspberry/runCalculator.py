@@ -45,7 +45,7 @@ class RunCalculator(QObject):
         self.camera.start()
         self.serial.start()
         self.server.start()
-        time.sleep(1000)#guarantees that webserver is running
+        time.sleep(1)#guarantees that webserver is running
         
         self.ic2Connection = INA219(addr=0x41)
         self.updateAkkuPercentage()
@@ -188,7 +188,10 @@ class RunCalculator(QObject):
         
     @pyqtSlot()
     def updateAkkuPercentage(self):
+        print("updating accu")
         bus_voltage = self.ic2Connection.getBusVoltage_V()             # voltage on V- (load side)
+        #power = self.ic2Connection.getPower_W()                        # power in W
+        #print("Power:         {:6.3f} W".format(power))
         self.accuPercentage = (bus_voltage - 9)/3.6*100
         if(self.accuPercentage > 100):self.accuPercentage = 100
         if(self.accuPercentage < 0):self.accuPercentage = 0
