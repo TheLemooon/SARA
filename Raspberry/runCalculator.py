@@ -167,7 +167,7 @@ class RunCalculator(QObject):
     
     @pyqtSlot()
     def deleteAllRuns(self):
-        pass
+        self.runTable.deleteTable()
     
     @pyqtSlot()
     def changeMode(self):

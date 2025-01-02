@@ -19,7 +19,7 @@ data = [
 ]
 
 imageName = "0/0.png"
-myIp = ip.internal()#"10.42.0.1"#ip.internal()
+myIp = "10.42.0.1"#ip.internal()
 
 class WebSever(QThread):
     signalUpdateRunTime = pyqtSignal(int,int)
@@ -109,7 +109,8 @@ class WebSever(QThread):
 
         @self.app.route("/delete", methods=["POST"])
         def delete_route():
-            self.signalDeleteData.emit()
+            self.deleteData()
+            return redirect(url_for("home"))
         
         @self.app.route("/deleteRun", methods=["POST"])
         def deleteRun_route():
@@ -158,12 +159,16 @@ class WebSever(QThread):
     def setTimeStamp(self):
         #self.currentImageIdx +=1
         self.signalUpdateRunTime.emit(self.currentRunIdx, self.currentImageIdx)
+        
+    def deleteData(self):
+        self.runs = []
+        self.signalDeleteData.emit()
 
     def download_data(self):
         """Generate a CSV file and send it for download."""
         file_path = "runs.csv"
         with open(file_path, mode="w", newline="") as file:
-            writer = csv.DictWriter(file, fieldnames=["ID", "Start", "Stop", "Time"])
+            writer = csv.DictWriter(file, fieldnames=["ID", "Date", "Time"])
             writer.writeheader()
             writer.writerows(data)
         return send_file(file_path, as_attachment=True)

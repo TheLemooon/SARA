@@ -50,6 +50,12 @@ class RunTable:
                         writer.writerow(data) 
                     if indexDeviation != 0:
                         os.rename(os.path.join(path,str(i)),os.path.join(path,str(i-indexDeviation)))
+                        
+    def deleteTable(self):
+        self.runs=[]
+        self.firstIndex = 0
+        self.lastIndex = -1
+        os.system("sudo rm -rf ./"+ path + "/*")
     
     def appendRun(self,run:Run):
         self.lastIndex  = 0
