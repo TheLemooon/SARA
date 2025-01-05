@@ -146,7 +146,7 @@ class RunCalculator(QObject):
         self.signalRequestingImages.connect(self.camera.stopRecordingAndProcessImages)
         self.camera.signalImagesProcessed.connect(self.receiveRequestedImages, Qt.DirectConnection)
         self.signalChangeRunIndicator.connect(self.server.changeRunIndicator)
-        self.server.signalResetRun.connect(self.resetCurrentRun, Qt.DirectConnection)
+        self.server.signalResetRun.connect(self.resetCurrentRun)#, Qt.DirectConnection)
         self.server.signalChangeMode.connect(self.changeMode, Qt.DirectConnection)
         self.server.signalPowerOff.connect(self.powerOff, Qt.DirectConnection)
         self.server.signalDeleteData.connect(self.deleteAllRuns, Qt.DirectConnection)

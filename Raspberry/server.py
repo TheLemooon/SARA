@@ -209,7 +209,7 @@ class WebSever(QThread):
             self.currentImageIdx = run.getCalculatedIndex()
             self.set_image()
             self.currentTime = f"{run.getRunTime():.2f}"
-            self.updateServer()
+            #self.updateServer()
             
     @pyqtSlot(Run)
     def updateRun(self,run: Run):
@@ -231,14 +231,15 @@ class WebSever(QThread):
             #change in to enum so this wont even be triggerd
             pass
         #self.socketio.emit("update_leds", self.led_states)
-        self.updateServer()
+        #self.updateServer()
         
     @pyqtSlot(float)
     def updateAccu(self,accuPercent):
         val = int(accuPercent/10)
         self.accuImage =f'static/accu{val}0.png'
+        print("accuupdate triggerd")
         #self.socketio.emit("update_accu_image", {"accuStateImage": self.accuImage})
-        self.updateServer()
+        #self.updateServer()
         
     def updateServer(self):
         #change to socket script, semms like bulshit
